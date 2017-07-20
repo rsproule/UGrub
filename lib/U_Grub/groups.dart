@@ -277,19 +277,25 @@ class _GroupFeedState extends State<GroupFeed> {
     final decoder = new FirebaseGroupDecoder();
     return new Scaffold(
         key: _scaffoldKey,
-        body: new FirebaseAnimatedList(
-            query: ref,
-            itemBuilder: (context, DataSnapshot snap,
-                Animation<double> animation) {
-              //cache logic
-              if (_groupCache.containsKey(snap.key)) {
-                return buildGroupItem(_groupCache[snap.key]);
-              } else {
-                GroupItem gi = decoder.convert(snap);
-                _groupCache.putIfAbsent(snap.key, () => gi);
-                return buildGroupItem(gi);
+        appBar: new AppBar(
+          title: new Text("My Groups"),
+        ),
+        body: new Container(
+          padding: const EdgeInsets.only(top: 10.0),
+          child: new FirebaseAnimatedList(
+              query: ref,
+              itemBuilder: (context, DataSnapshot snap,
+                  Animation<double> animation) {
+                //cache logic
+                if (_groupCache.containsKey(snap.key)) {
+                  return buildGroupItem(_groupCache[snap.key]);
+                } else {
+                  GroupItem gi = decoder.convert(snap);
+                  _groupCache.putIfAbsent(snap.key, () => gi);
+                  return buildGroupItem(gi);
+                }
               }
-            }
+          ),
         )
     );
   }

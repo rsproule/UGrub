@@ -12,7 +12,7 @@ final googleSignIn = new GoogleSignIn();
 final firebaseAnalytics = new FirebaseAnalytics();
 final auth = FirebaseAuth.instance;
 
-Future<Null> _ensureLoggedIn() async {
+Future<Null> ensureLoggedIn() async {
   GoogleSignInAccount user = googleSignIn.currentUser;
   if (user == null)
     user = await googleSignIn.signInSilently();
@@ -36,5 +36,5 @@ Future<Null> _ensureLoggedIn() async {
 }
 
 login() async {
-  await _ensureLoggedIn();
+  await ensureLoggedIn();
 }

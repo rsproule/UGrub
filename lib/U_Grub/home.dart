@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import 'drawer.dart';
 import 'feed.dart';
@@ -10,13 +11,16 @@ class GrubHome extends StatefulWidget {
     this.isLightTheme,
     @required this.onThemeChanged,
     this.themeColor,
-    this.onColorChanged
+    this.onColorChanged,
+    @required this.user
   }) :  assert(onThemeChanged != null),
         assert(onColorChanged != null),
         super(key: key);
 
   final isLightTheme;
   final ValueChanged<bool> onThemeChanged;
+
+  final GoogleSignInAccount user;
 
   final Color themeColor;
   final ValueChanged<int> onColorChanged;
@@ -26,12 +30,17 @@ class GrubHome extends StatefulWidget {
 }
 
 class _GrubHomeState extends State<GrubHome> {
+  static final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<
+      ScaffoldState>();
 
-
+  void showDrawer() {
+    _scaffoldKey.currentState.openDrawer();
+  }
 
   @override
   Widget build(BuildContext context) {
     Widget home = new Scaffold(
+      key: _scaffoldKey,
       drawer: new AppDrawer(
         isLightTheme: widget.isLightTheme,
         onThemeChanged: widget.onThemeChanged,
@@ -40,13 +49,11 @@ class _GrubHomeState extends State<GrubHome> {
 
       ),
 
-      appBar: new AppBar(
-        title: new Text("UGrub"),
+//      appBar: new AppBar(
+//        toolbarOpacity: .1,
+//      ),
 
-      ),
-
-      body: new MainFeed(),
-
+      body: new MainFeed(showDrawer: showDrawer, user: widget.user,),
 
 
     );

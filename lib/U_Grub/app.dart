@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'home.dart';
@@ -11,13 +12,14 @@ import 'dart:async';
 //routing (if I need it)
 
 
-final googleSignIn = new GoogleSignIn();
-final firebaseAnalytics = new FirebaseAnalytics();
-final auth = FirebaseAuth.instance;
 
 
 class GrubApp extends StatefulWidget {
+  const GrubApp({
+    @required this.user
+});
 
+  final GoogleSignInAccount user;
   @override
   _GrubAppState createState() => new _GrubAppState();
 }
@@ -27,31 +29,6 @@ class _GrubAppState extends State<GrubApp> {
   Color _themeColor = Colors.blue;
 
 
-  Future<Null> _ensureLoggedIn() async {
-    GoogleSignInAccount user = googleSignIn.currentUser;
-    if (user == null)
-      user = await googleSignIn.signInSilently();
-    if (user != null) {
-      firebaseAnalytics.logLogin();
-    }
-    if (user == null) {
-      await googleSignIn.signIn();
-      firebaseAnalytics.logSignUp(signUpMethod: "Google");
-    }
-    //auth
-    if (auth.currentUser == null) {
-      GoogleSignInAuthentication credentials =
-      await googleSignIn.currentUser.authentication;
-      await auth.signInWithGoogle(
-        idToken: credentials.idToken,
-        accessToken: credentials.accessToken,
-      );
-    }
-  }
-
-  login() async {
-    await _ensureLoggedIn();
-  }
 
   getThemeFromPreference() async {
     SharedPreferences pref = await SharedPreferences.getInstance();
@@ -60,27 +37,6 @@ class _GrubAppState extends State<GrubApp> {
 
       _themeColor = pref.getBool("isLightTheme") != null ? new Color(pref.getInt("themeColor")) : _themeColor;
 
-//      Color color;
-//      switch(pref.getString("themeColor")){
-//
-//        case "RED":
-//          color = Colors.red;
-//          break;
-//        case "BLUE":
-//          color = Colors.blue;
-//          break;
-//        case "GREEN":
-//          color = Colors.green;
-//          break;
-//        case "ORANGE":
-//          color = Colors.orange;
-//          break;
-//        default:
-//          color = Colors.blue;
-//
-//      }
-//
-//      _themeColor = color;
     });
 
     }
@@ -89,12 +45,12 @@ class _GrubAppState extends State<GrubApp> {
   void initState() {
     super.initState();
     getThemeFromPreference();
-    login();
   }
 
 
   @override
   Widget build(BuildContext context) {
+
     final ThemeData _lightTheme = new ThemeData(
         accentColor: _themeColor,
         primaryColor: _themeColor,
@@ -107,6 +63,7 @@ class _GrubAppState extends State<GrubApp> {
     );
 
     Widget home = new GrubHome(
+      user: widget.user,
       isLightTheme: _isLightTheme,
       onThemeChanged: (bool val) async {
         SharedPreferences pref = await SharedPreferences.getInstance();

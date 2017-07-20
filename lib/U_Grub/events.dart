@@ -9,10 +9,15 @@ import 'groups.dart';
 class EventFeed extends StatefulWidget {
   const EventFeed({
     Key key,
-    @required this.query
+    this.showDrawer,
+    @required this.query,
+    @required this.hasAppBar
+
 
   }) : super(key: key);
 
+  final bool hasAppBar;
+  final Function showDrawer;
   final DatabaseReference query;
 
   @override
@@ -31,6 +36,8 @@ class _EventFeedState extends State<EventFeed> {
     DateTime bdate = DateTime.parse(b.value['date']);
     return adate.compareTo(bdate);
   };
+
+  bool _isCalendarMode = false;
 
   @override
   Widget build(BuildContext context) {
@@ -60,13 +67,37 @@ class _EventFeedState extends State<EventFeed> {
         }
     );
 
+
+
     return new Scaffold(
         key: _scaffoldKey,
         body: new RefreshIndicator(
             key: _refreshIndicatorKey,
             child: mainFeed,
             onRefresh: _handleRefresh
-        )
+        ),
+        appBar: widget.hasAppBar ? new AppBar(
+          title: new Text("Saved Events"),
+          leading: new IconButton(
+              icon: new Icon(Icons.menu),
+              onPressed: widget.showDrawer
+          ),
+          actions: <Widget>[
+            new IconButton(
+                icon: _isCalendarMode ? new Icon(Icons.list) : new Icon(Icons.calendar_today),
+                onPressed: (){
+                  setState((){
+                    _isCalendarMode = !_isCalendarMode;
+                  });
+                },
+              tooltip: "Change Event View Mode",
+            )
+          ],
+
+        ) : null,
+        
+
+
     );
   }
 
@@ -267,11 +298,8 @@ class EventCard extends StatelessWidget {
                   alignment: MainAxisAlignment.start,
                   children: <Widget>[
                     new PopupMenuButton(
-                        child: new FlatButton(
-                          child: const Text('SHARE'),
-                          textColor: Colors.amber.shade500,
-                          onPressed: () {}
-                        ),
+
+                        child: new Text("SHARE", style: Theme.of(context).textTheme.button.copyWith(color: Colors.amber.shade500),),
                         itemBuilder: (BuildContext context) =>
                         <PopupMenuItem<String>>[
                           buildMenuItem(context, Icons.replay, "Repost"),

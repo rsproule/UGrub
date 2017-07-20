@@ -73,7 +73,7 @@ class _GroupLandingPageState extends State<GroupLandingPage> {
         ),
 
 
-        body: new EventFeed(query: query)
+        body: new EventFeed(query: query, hasAppBar: false,)
     );
   }
 }
