@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_database/ui/firebase_animated_list.dart';
@@ -41,6 +40,20 @@ class FirebaseGroupDecoder extends Converter<DataSnapshot, GroupItem> {
       );
     });
 
+    Map admin = input['admins'];
+
+    List<User> _admins = [];
+
+    admin.forEach((k, v) {
+      _admins.add(
+          new User(
+              name: v['name'],
+              image: v['image'],
+              Id: k
+          )
+      );
+    });
+
     Map ev = input['events'];
 
     List<MyEvent> _events = [];
@@ -73,6 +86,7 @@ class FirebaseGroupDecoder extends Converter<DataSnapshot, GroupItem> {
         description: input['description'],
         image: input['image'],
         members: _members,
+        admins: _admins,
         contactInfo: new ContactInfo(
             email: input['contactInfo']['email'] == null ? "Not Listed" : input['contactInfo']['email'],
             phoneNumber: input['contactInfo']['phone'] == null ? "None Listed" : input['contactInfo']['phone']
@@ -90,25 +104,7 @@ class _GroupFeedState extends State<GroupFeed> {
       ScaffoldState>();
 
 
-  PopupMenuItem<String> _buildMenuItem(IconData icon, String label) {
-    Color color = Theme
-        .of(context)
-        .brightness == Brightness.light ? Colors.black : Theme
-        .of(context)
-        .accentColor;
-    return new PopupMenuItem<String>(
-      value: label,
-      child: new Row(
-        children: <Widget>[
-          new Padding(
-              padding: const EdgeInsets.only(right: 24.0),
-              child: new Icon(icon, color: color)
-          ),
-          new Text(label),
-        ],
-      ),
-    );
-  }
+
 
   Widget buildGroupItem(GroupItem item) {
     ThemeData theme = Theme.of(context);
@@ -129,6 +125,7 @@ class _GroupFeedState extends State<GroupFeed> {
                   : new Icon(Icons.group),
               dense: true,
               trailing: new PopupMenuButton(
+
                 onSelected: (String selected) {
                   switch (selected) {
                     case "Leave":
@@ -150,9 +147,9 @@ class _GroupFeedState extends State<GroupFeed> {
                 },
                 itemBuilder: (BuildContext context) =>
                 <PopupMenuItem<String>>[
-                  _buildMenuItem(Icons.exit_to_app, "Leave"),
-                  _buildMenuItem(Icons.volume_mute, "Mute"),
-                  _buildMenuItem(Icons.blur_off, "Hide")
+                  buildMenuItem(context, Icons.exit_to_app, "Leave"),
+                  buildMenuItem(context, Icons.volume_mute, "Mute"),
+                  buildMenuItem(context, Icons.blur_off, "Hide")
                 ],
                 tooltip: "Show group options",
 
@@ -298,6 +295,26 @@ class _GroupFeedState extends State<GroupFeed> {
   }
 }
 
+PopupMenuItem<String> buildMenuItem(BuildContext context, IconData icon, String label) {
+  Color color = Theme
+      .of(context)
+      .brightness == Brightness.light ? Colors.black : Theme
+      .of(context)
+      .accentColor;
+  return new PopupMenuItem<String>(
+    value: label,
+    child: new Row(
+      children: <Widget>[
+        new Padding(
+            padding: const EdgeInsets.only(right: 24.0),
+            child: new Icon(icon, color: color)
+        ),
+        new Text(label),
+      ],
+    ),
+  );
+}
+
 class GroupItem implements Comparable<GroupItem> {
   GroupItem({
     @required this.name,
@@ -305,6 +322,7 @@ class GroupItem implements Comparable<GroupItem> {
     @required this.description,
     @required this.image,
     this.members,
+    this.admins,
     this.contactInfo,
     this.events,
     this.imgFile,
@@ -323,13 +341,15 @@ class GroupItem implements Comparable<GroupItem> {
         contactInfo = item.contactInfo,
         events = item.events,
         thumbnail = item.thumbnail,
-        imgFile = item.imgFile;
+        imgFile = item.imgFile,
+        admins = item.admins;
 
   final String name;
   final String key;
   final String description;
   final String image;
   final List<User> members;
+  final List<User> admins;
   final ContactInfo contactInfo;
   final List<MyEvent> events;
 

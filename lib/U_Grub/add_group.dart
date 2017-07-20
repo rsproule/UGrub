@@ -12,7 +12,6 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:u_grub2/U_Grub/user.dart';
 import 'login.dart';
-import 'groups.dart';
 import 'image_converter.dart';
 
 class AddGroupForm extends StatefulWidget {
@@ -36,6 +35,7 @@ class _AddGroupFormState extends State<AddGroupForm> {
   Future<bool> _onWillPop() async {
     final FormState form = _formKey.currentState;
     form.save();
+    if(_hasBeenEdited)
 
     if (checkIfEmpty())
       return true;
@@ -91,9 +91,6 @@ class _AddGroupFormState extends State<AddGroupForm> {
     _hasBeenEdited = true;
     if (val.isEmpty)
       return 'Description is required.';
-    final RegExp nameExp = new RegExp(r'^[A-za-z ]+$');
-    if (!nameExp.hasMatch(val))
-      return 'Please enter only alphabetical characters.';
     return null;
   }
 
@@ -108,7 +105,7 @@ class _AddGroupFormState extends State<AddGroupForm> {
 //    return null;
     return null;
   }
-
+  /*
   String _validatePhoneNumber(String value) {
     _hasBeenEdited = true;
 
@@ -121,7 +118,7 @@ class _AddGroupFormState extends State<AddGroupForm> {
       return '(###) ###-#### - Please enter a valid US phone number.';
     return null;
   }
-
+  */
   _submitForm() async {
     if (imageFile == null) {
       setState(() {
@@ -393,7 +390,8 @@ Future<bool> uploadInfo(GroupData group,
     ContactInfoData groupContact, File imageFile) async {
 
   await login();
-  String image = await _uploadImage(imageFile, 400); // width is 800
+
+  String image = await _uploadImage(imageFile, 800); // width is 800
   String thumbnail = await _uploadImage(imageFile, 120);
 
 
@@ -449,7 +447,8 @@ Future<bool> uploadInfo(GroupData group,
 
 _uploadImage(File imageFile, int size) async {
 
-  //create thumbnail version
+  // create thumbnail version
+  // extremely expensive, won't run on my phone
   File newImageFile = convertToSize(imageFile, size);
 
 

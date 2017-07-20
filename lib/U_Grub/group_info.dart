@@ -313,10 +313,12 @@ class About extends StatelessWidget {
 
 class MemberTile extends StatelessWidget {
   const MemberTile({
-    this.member
+    this.member,
+    this.onTap
   });
 
   final User member;
+  final Function onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -324,9 +326,11 @@ class MemberTile extends StatelessWidget {
       title: new Text(member.name),
       leading: new CircleAvatar(
         child: new Image.network(member.image)
-      )
+      ),
+      onTap: this.onTap
     );
   }
+
 }
 
 

@@ -107,15 +107,14 @@ class _AppDrawerState extends State<AppDrawer> {
 
     );
 
-    final Widget header = new DrawerHeader(
+    final Widget header = new Container(
 //      decoration: new BoxDecoration(
 //        image: new DecorationImage(
 //            image: new AssetImage("assets/images/HeaderLogo.jpeg")
 //        )
 //      ),
       child: new Image.asset("assets/images/full_clear_back.png"),
-      padding: const EdgeInsets.all(0.0),
-
+      padding: new EdgeInsets.only(top: systemTopPadding),
 
     );
 
@@ -125,7 +124,7 @@ class _AppDrawerState extends State<AppDrawer> {
       applicationLegalese: "Ryan Sproule ® 2017",
       applicationIcon: new Container(
         child: new Image.asset("assets/images/logo_clear_back.png"),
-        width: 100.0,
+        width: 80.0,
 
       ),
 
@@ -135,9 +134,10 @@ class _AppDrawerState extends State<AppDrawer> {
 
     final List<Widget> _allDrawerItems = <Widget>[
       header,
-      appInfo,
       new Divider(height: 0.0,),
       settingsTab,
+      new Divider(height: 0.0,),
+      appInfo,
       new Divider(height: 0.0,),
 
     ];

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import "package:firebase_database/firebase_database.dart";
 import 'package:firebase_database/ui/firebase_animated_list.dart';
 import 'event_info.dart';
+import 'groups.dart';
 
 class EventFeed extends StatefulWidget {
   const EventFeed({
@@ -29,22 +30,17 @@ class _EventFeedState extends State<EventFeed> {
     DateTime adate = DateTime.parse(a.value['date']);
     DateTime bdate = DateTime.parse(b.value['date']);
     return adate.compareTo(bdate);
-
-
   };
 
   @override
   Widget build(BuildContext context) {
-
-
-
     Widget mainFeed = new FirebaseAnimatedList(
         defaultChild: new Center(child: new Text("Nother here yet"),),
         sort: time,
         query: widget.query,
-        itemBuilder: (context, DataSnapshot snap, Animation<double> animation){
+        itemBuilder: (context, DataSnapshot snap, Animation<double> animation) {
           MyEvent event = new MyEvent(
-            title: snap.value['title'],
+              title: snap.value['title'],
               description: snap.value['description'],
               location: snap.value['location'],
               organization: snap.value['organization'],
@@ -57,7 +53,6 @@ class _EventFeedState extends State<EventFeed> {
           );
 
 
-
           return new EventCard(
             event: event,
             height: 366.0,
@@ -66,12 +61,12 @@ class _EventFeedState extends State<EventFeed> {
     );
 
     return new Scaffold(
-      key: _scaffoldKey,
-      body: new RefreshIndicator(
-          key: _refreshIndicatorKey,
-          child: mainFeed,
-          onRefresh: _handleRefresh
-      )
+        key: _scaffoldKey,
+        body: new RefreshIndicator(
+            key: _refreshIndicatorKey,
+            child: mainFeed,
+            onRefresh: _handleRefresh
+        )
     );
   }
 
@@ -189,7 +184,8 @@ class EventCard extends StatelessWidget {
   const EventCard({
     @required this.event,
     @required this.height
-});
+  });
+
   final MyEvent event;
   final double height;
 
@@ -270,12 +266,17 @@ class EventCard extends StatelessWidget {
                 child: new ButtonBar(
                   alignment: MainAxisAlignment.start,
                   children: <Widget>[
-                    new FlatButton(
-                      child: const Text('SHARE'),
-                      textColor: Colors.amber.shade500,
-                      onPressed: () {
-                        /* do nothing */
-                      },
+                    new PopupMenuButton(
+                        child: new FlatButton(
+                          child: const Text('SHARE'),
+                          textColor: Colors.amber.shade500,
+                          onPressed: () {}
+                        ),
+                        itemBuilder: (BuildContext context) =>
+                        <PopupMenuItem<String>>[
+                          buildMenuItem(context, Icons.replay, "Repost"),
+                          buildMenuItem(context, Icons.perm_media, "Share"),
+                        ]
                     ),
                     new FlatButton(
                       child: const Text('MORE INFO'),
