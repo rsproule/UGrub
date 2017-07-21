@@ -5,6 +5,8 @@ import 'events.dart';
 import 'groups.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:u_grub2/U_Grub/add_group.dart';
+import 'package:u_grub2/U_Grub/home_feed.dart';
+import 'package:u_grub2/U_Grub/notifications_page.dart';
 import 'profile_page.dart';
 
 
@@ -74,7 +76,7 @@ class _MainFeedState extends State<MainFeed> with TickerProviderStateMixin {
         ],
         currentIndex: _index,
         type: BottomNavigationBarType.fixed,
-        iconSize: 35.0,
+        iconSize: 32.0,
 
 
     );
@@ -90,9 +92,9 @@ class _MainFeedState extends State<MainFeed> with TickerProviderStateMixin {
 //            padding: const EdgeInsets.only(top: 10.0),
 //        ),
 
-      new Center(child: new Text("Home")),
+      new HomePageFeed(user: widget.user, showDrawer: widget.showDrawer,),
       new EventFeed(query: query, showDrawer: widget.showDrawer, hasAppBar: true,),
-      new Center(child: new Text("Notifiactions")),
+      new NotificationsPage(showDrawer: widget.showDrawer, user: widget.user),
       new ProfilePage(showDrawer: widget.showDrawer, user: widget.user,)
     ];
 
