@@ -151,6 +151,7 @@ class _GridItemState extends State<GridItem> {
   Widget build(BuildContext context) {
     MyEvent event = widget.event;
     final Widget image = new GestureDetector(
+
         onTap: () {
           Navigator.of(context).push(new MaterialPageRoute(
               builder: (BuildContext build){
@@ -160,9 +161,11 @@ class _GridItemState extends State<GridItem> {
           );
         },
         child: new Hero(
+
             key: new Key(event.hashCode.toString()),
             tag: event.title,
-            child: new Image.network(event.image, fit: BoxFit.cover)
+            child: new Image.network(event.image, fit: BoxFit.cover),
+
         )
     );
 
@@ -171,6 +174,7 @@ class _GridItemState extends State<GridItem> {
 
 
     return new GridTile(
+
       footer: new GestureDetector(
         onTap: () { onBannerTap(); },
         child: new GridTileBar(
