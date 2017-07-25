@@ -13,6 +13,7 @@ import 'profile_page.dart';
 class MainFeed extends StatefulWidget {
   const MainFeed({
     Key key,
+    this.currentLocation,
     this.showDrawer,
     this.user
 
@@ -20,6 +21,7 @@ class MainFeed extends StatefulWidget {
 
   final showDrawer;
   final GoogleSignInAccount user;
+  final currentLocation;
 
   @override
   _MainFeedState createState() => new _MainFeedState();
@@ -92,7 +94,7 @@ class _MainFeedState extends State<MainFeed> with TickerProviderStateMixin {
 //            padding: const EdgeInsets.only(top: 10.0),
 //        ),
 
-      new HomePageFeed(user: widget.user, showDrawer: widget.showDrawer,),
+      new HomePageFeed(user: widget.user, showDrawer: widget.showDrawer, currentLocation : widget.currentLocation),
       new EventFeed(query: query, showDrawer: widget.showDrawer, hasAppBar: true,),
       new NotificationsPage(showDrawer: widget.showDrawer, user: widget.user),
       new ProfilePage(showDrawer: widget.showDrawer, user: widget.user,)

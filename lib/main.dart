@@ -18,3 +18,4 @@ Future<GoogleSignIn> login() async {
   await ensureLoggedIn();
   return googleSignIn;
 }
+

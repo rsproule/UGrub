@@ -18,18 +18,34 @@
 	<string>1.0</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.575921570856-oqp4k71dt0k7e2dliivf5v9q44727dol</string>
+				<string>com.yourcompany.uGrub2</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>1</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>UGrub needs access to the camera</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>UGrub needs access to your location to find events near you!</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>UGrub needs access to your location to find events near you!</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>UGrub needs access to photos</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>UGrub needs access to photos</string>
-	<key>NSCameraUsageDescription</key>
-	<string>UGrub needs access to the camera</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>arm64</string>
@@ -49,17 +65,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>com.googleusercontent.apps.575921570856-oqp4k71dt0k7e2dliivf5v9q44727dol</string>
-				<string>com.yourcompany.uGrub2</string>
-			</array>
-		</dict>
-	</array>
 </dict>
 </plist>

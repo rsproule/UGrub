@@ -42,7 +42,7 @@ class _EventFeedState extends State<EventFeed> {
   @override
   Widget build(BuildContext context) {
     Widget mainFeed = new FirebaseAnimatedList(
-        defaultChild: new Center(child: new Text("Nother here yet"),),
+        defaultChild: new Center(child: new Container(child: new CircularProgressIndicator()),),
         sort: time,
         query: widget.query,
         itemBuilder: (context, DataSnapshot snap, Animation<double> animation) {

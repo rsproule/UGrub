@@ -1,15 +1,24 @@
+import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_database/ui/firebase_animated_list.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:location/location.dart';
 import 'events.dart';
 import 'group_info.dart';
 
 class HomePageFeed extends StatefulWidget {
-  const HomePageFeed({Key key, this.showDrawer, this.user}) : super(key: key);
+  const HomePageFeed({
+    Key key,
+    this.showDrawer,
+    this.user,
+    this.currentLocation
+  }) : super(key: key);
 
   final showDrawer;
   final GoogleSignInAccount user;
+  final currentLocation;
 
   @override
   _HomePageFeedState createState() => new _HomePageFeedState();
@@ -23,7 +32,12 @@ class _HomePageFeedState extends State<HomePageFeed> {
   static List<Widget> _nearby_events = [];
   static List<Widget> _upcoming_events = [];
   static List<Widget> _food_categories = [];
-  List<List<Widget>> allSideFeed = [_popular_events, _upcoming_events ,_nearby_events, _food_categories];
+  List<List<Widget>> allSideFeed = [
+    _popular_events,
+    _upcoming_events,
+    _nearby_events,
+    _food_categories
+  ];
 
   buildAppBar() {
     return new Card(
@@ -76,76 +90,72 @@ class _HomePageFeedState extends State<HomePageFeed> {
         ));
   }
 
-  getSideScrollItems(DatabaseReference query, int index, GridItemType type) async {
+  getSideScrollItems(
+      DatabaseReference query, int index, GridItemType type) async {
     DataSnapshot snap = await query.once();
     Map b = snap.value;
     List<EventInSideScrollItem> _items = [];
-    bool hasScore = false;
+    bool isPopular = (type == GridItemType.popular);
 
     b.forEach((k, snap) {
-      hasScore = snap['score'] != null;
       MyEvent event = new MyEvent(
-          title: snap['title'],
-          description: snap['description'],
-          location: snap['location'],
-          organization: snap['organization'],
-          date: DateTime.parse(snap['date']),
-          startTime: snap['startTime'],
-          endTime: snap['endTime'],
-          image: snap['image'],
-          foodType: snap['foodType'],
-          isFlagged: false,
+        title: snap['title'],
+        description: snap['description'],
+        location: snap['location'],
+        organization: snap['organization'],
+        date: DateTime.parse(snap['date']),
+        startTime: snap['startTime'],
+        endTime: snap['endTime'],
+        image: snap['image'],
+        foodType: snap['foodType'],
+        isFlagged: false,
       );
       int score;
-      if(hasScore){
-        int numFlags = snap['flags'].length;
-        int dateBonus;
-        int hoursTillEvent = event.date.difference(new DateTime.now()).inHours;
-        dateBonus = -hoursTillEvent;
-        score = 10 * numFlags + dateBonus;
-        if(score < 0){
-          score = numFlags;
-        }
+      if (isPopular) {
+        score = _get_score(snap['flags'].length, event.date);
+      }
+
+      int distance;
+      if (type == GridItemType.nearby) {
+        double latitude = double.parse(snap['geolocation']['latitude']);
+        double longitude = double.parse(snap['geolocation']['longitude']);
+        distance = _get_distance(latitude, longitude, widget.currentLocation);
       }
 
       EventInSideScrollItem item = new EventInSideScrollItem(
         event: event,
-        score : hasScore ? score : null,
-        daysTill : event.date.difference(new DateTime.now()).inDays,
+        score: isPopular ? score : null,
+        daysTill: event.date.difference(new DateTime.now()).inDays,
         type: type,
-        distance: 5,
-
+        distance: distance,
       );
-
-
       _items.add(item);
     });
+
     Comparator time = (a, b) {
       DateTime aDate = a.event.date;
       DateTime bDate = b.event.date;
       return aDate.compareTo(bDate);
     };
 
-
     Comparator score = (a, b) {
       int a_Score = a.score;
       int b_Score = b.score;
-      if(a_Score == b_Score){
+      if (a_Score == b_Score) {
         DateTime aDate = a.event.date;
         DateTime bDate = b.event.date;
         return aDate.compareTo(bDate);
-      }else{
+      } else {
         return b_Score.compareTo(a_Score);
-
       }
     };
 
     _items.sort(time);
 
-    if(hasScore) {
+    if (isPopular) {
       _items.sort(score);
     }
-    _items.removeWhere((e){
+    _items.removeWhere((e) {
       DateTime now = new DateTime.now();
 
       return now.isAfter(e.event.date);
@@ -156,17 +166,31 @@ class _HomePageFeedState extends State<HomePageFeed> {
     });
   }
 
+  _get_score(int numFlags, DateTime date) {
+    int score;
+    int dateBonus;
+    int hoursTillEvent = date.difference(new DateTime.now()).inHours;
+    dateBonus = -hoursTillEvent;
+    score = 10 * numFlags + dateBonus;
+    if (score < 0) {
+      score = numFlags;
+    }
+    return score;
+  }
+
+  _get_distance(double latitude, double longitude, currentLocation) {
+    print(latitude);
+    print(longitude);
+    print(currentLocation);
+
+    return 5;
+  }
+
   buildSideScroll(List<Widget> _items) {
     return new Container(
         height: 200.0,
         child: _items.length == 0
-            ? new Center(
-                child: new IconButton(
-                icon: new Icon(Icons.refresh),
-                onPressed: () {
-                  initState();
-                },
-              ))
+            ? new Center(child: new CircularProgressIndicator())
             : new ListView(
                 scrollDirection: Axis.horizontal,
                 primary: true,
@@ -212,14 +236,16 @@ class _HomePageFeedState extends State<HomePageFeed> {
 //    });
 
     Widget tacos = new FoodTile(
-      image: "https://www.tacobueno.com/assets/food/tacos/Taco_BFT_Beef_990x725.jpg",
+      image:
+          "https://www.tacobueno.com/assets/food/tacos/Taco_BFT_Beef_990x725.jpg",
       name: "Tacos",
     );
     _items.add(tacos);
 
     Widget iceCream = new FoodTile(
       name: "Ice Cream",
-      image: "https://www-tc.pbs.org/food/files/2012/07/History-of-Ice-Cream-1.jpg",
+      image:
+          "https://www-tc.pbs.org/food/files/2012/07/History-of-Ice-Cream-1.jpg",
     );
     _items.add(iceCream);
 
@@ -228,24 +254,27 @@ class _HomePageFeedState extends State<HomePageFeed> {
     });
   }
 
+
   @override
   void initState() {
     super.initState();
+
+
     //TODO edit the query here
     DatabaseReference popularEventsQuery =
         FirebaseDatabase.instance.reference().child("popular");
     getSideScrollItems(popularEventsQuery, 0, GridItemType.popular);
 
     DatabaseReference upcomingEventsQuery =
-        FirebaseDatabase.instance.reference().child("events");
+        FirebaseDatabase.instance.reference().child("popular");
     getSideScrollItems(upcomingEventsQuery, 1, GridItemType.upcoming);
 
     DatabaseReference nearbyEventsQuery =
-    FirebaseDatabase.instance.reference().child("events");
+        FirebaseDatabase.instance.reference().child("popular");
     getSideScrollItems(nearbyEventsQuery, 2, GridItemType.nearby);
 
     DatabaseReference foodTypesQuery =
-    FirebaseDatabase.instance.reference().child("events");
+        FirebaseDatabase.instance.reference().child("popular");
     getFoodCategories(foodTypesQuery, 3);
   }
 
@@ -263,9 +292,7 @@ class _HomePageFeedState extends State<HomePageFeed> {
       backgroundColor: Colors.transparent,
       pinned: true,
     );
-    final Orientation orientation = MediaQuery
-        .of(context)
-        .orientation;
+    final Orientation orientation = MediaQuery.of(context).orientation;
 
     return new CustomScrollView(slivers: <Widget>[
       dynamicAppBar,
@@ -288,12 +315,9 @@ class _HomePageFeedState extends State<HomePageFeed> {
           mainAxisSpacing: 4.0,
           crossAxisSpacing: 4.0,
           padding: const EdgeInsets.all(4.0),
-          childAspectRatio: (orientation == Orientation.portrait)
-              ? 1.0
-              : 1.3,
+          childAspectRatio: (orientation == Orientation.portrait) ? 1.0 : 1.3,
           children: allSideFeed[3],
         )
-
       ])),
     ]);
   }
@@ -314,20 +338,14 @@ class _HomePageFeedState extends State<HomePageFeed> {
 }
 
 class EventInSideScrollItem extends StatelessWidget {
-  const EventInSideScrollItem({
-    this.event,
-    this.score,
-    this.daysTill,
-    this.type,
-    this.distance
-  });
+  const EventInSideScrollItem(
+      {this.event, this.score, this.daysTill, this.type, this.distance});
 
   final MyEvent event;
   final int score;
   final int daysTill;
   final int distance;
   final GridItemType type;
-
 
   @override
   Widget build(BuildContext context) {
@@ -338,29 +356,29 @@ class EventInSideScrollItem extends StatelessWidget {
           event: event,
           score: score,
           daysTill: daysTill,
-          type : type,
+          type: type,
           distance: distance,
         ));
   }
 }
 
 class FoodTile extends StatelessWidget {
-  const FoodTile({
-    this.image,
-    this.name
-});
+  const FoodTile({this.image, this.name});
 
   final String image;
   final String name;
+
   @override
   Widget build(BuildContext context) {
     return new GridTile(
-        child: new Image.network(image, fit: BoxFit.fill,),
-        footer: new GridTileBar(
-          title: new Text(name),
-          backgroundColor: Colors.black26,
-        ),
+      child: new Image.network(
+        image,
+        fit: BoxFit.fill,
+      ),
+      footer: new GridTileBar(
+        title: new Text(name),
+        backgroundColor: Colors.black26,
+      ),
     );
   }
 }
-

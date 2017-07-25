@@ -9,6 +9,7 @@ class GrubHome extends StatefulWidget {
   const GrubHome({
     Key key,
     this.isLightTheme,
+    this.currentLocation,
     @required this.onThemeChanged,
     this.themeColor,
     this.onColorChanged,
@@ -19,6 +20,8 @@ class GrubHome extends StatefulWidget {
 
   final isLightTheme;
   final ValueChanged<bool> onThemeChanged;
+
+  final currentLocation;
 
   final GoogleSignInAccount user;
 
@@ -53,7 +56,11 @@ class _GrubHomeState extends State<GrubHome> {
 //        toolbarOpacity: .1,
 //      ),
 
-      body: new MainFeed(showDrawer: showDrawer, user: widget.user,),
+      body: new MainFeed(
+        showDrawer: showDrawer,
+        user: widget.user,
+        currentLocation: widget.currentLocation
+      ),
 
 
     );
