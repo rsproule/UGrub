@@ -76,12 +76,14 @@ class _HomePageFeedState extends State<HomePageFeed> {
         ));
   }
 
-  getSideScrollItems(DatabaseReference query, int index) async {
+  getSideScrollItems(DatabaseReference query, int index, GridItemType type) async {
     DataSnapshot snap = await query.once();
     Map b = snap.value;
     List<EventInSideScrollItem> _items = [];
+    bool hasScore = false;
 
     b.forEach((k, snap) {
+      hasScore = snap['score'] != null;
       MyEvent event = new MyEvent(
           title: snap['title'],
           description: snap['description'],
@@ -92,11 +94,30 @@ class _HomePageFeedState extends State<HomePageFeed> {
           endTime: snap['endTime'],
           image: snap['image'],
           foodType: snap['foodType'],
-          isFlagged: false);
+          isFlagged: false,
+      );
+      int score;
+      if(hasScore){
+        int numFlags = snap['flags'].length;
+        int dateBonus;
+        int hoursTillEvent = event.date.difference(new DateTime.now()).inHours;
+        dateBonus = -hoursTillEvent;
+        score = 10 * numFlags + dateBonus;
+        if(score < 0){
+          score = numFlags;
+        }
+      }
 
       EventInSideScrollItem item = new EventInSideScrollItem(
         event: event,
+        score : hasScore ? score : null,
+        daysTill : event.date.difference(new DateTime.now()).inDays,
+        type: type,
+        distance: 5,
+
       );
+
+
       _items.add(item);
     });
     Comparator time = (a, b) {
@@ -105,9 +126,25 @@ class _HomePageFeedState extends State<HomePageFeed> {
       return aDate.compareTo(bDate);
     };
 
+
+    Comparator score = (a, b) {
+      int a_Score = a.score;
+      int b_Score = b.score;
+      if(a_Score == b_Score){
+        DateTime aDate = a.event.date;
+        DateTime bDate = b.event.date;
+        return aDate.compareTo(bDate);
+      }else{
+        return b_Score.compareTo(a_Score);
+
+      }
+    };
+
     _items.sort(time);
 
-
+    if(hasScore) {
+      _items.sort(score);
+    }
     _items.removeWhere((e){
       DateTime now = new DateTime.now();
 
@@ -196,16 +233,16 @@ class _HomePageFeedState extends State<HomePageFeed> {
     super.initState();
     //TODO edit the query here
     DatabaseReference popularEventsQuery =
-        FirebaseDatabase.instance.reference().child("events");
-    getSideScrollItems(popularEventsQuery, 0);
+        FirebaseDatabase.instance.reference().child("popular");
+    getSideScrollItems(popularEventsQuery, 0, GridItemType.popular);
 
     DatabaseReference upcomingEventsQuery =
         FirebaseDatabase.instance.reference().child("events");
-    getSideScrollItems(upcomingEventsQuery, 1);
+    getSideScrollItems(upcomingEventsQuery, 1, GridItemType.upcoming);
 
     DatabaseReference nearbyEventsQuery =
     FirebaseDatabase.instance.reference().child("events");
-    getSideScrollItems(nearbyEventsQuery, 2);
+    getSideScrollItems(nearbyEventsQuery, 2, GridItemType.nearby);
 
     DatabaseReference foodTypesQuery =
     FirebaseDatabase.instance.reference().child("events");
@@ -277,9 +314,20 @@ class _HomePageFeedState extends State<HomePageFeed> {
 }
 
 class EventInSideScrollItem extends StatelessWidget {
-  const EventInSideScrollItem({this.event});
+  const EventInSideScrollItem({
+    this.event,
+    this.score,
+    this.daysTill,
+    this.type,
+    this.distance
+  });
 
   final MyEvent event;
+  final int score;
+  final int daysTill;
+  final int distance;
+  final GridItemType type;
+
 
   @override
   Widget build(BuildContext context) {
@@ -288,6 +336,10 @@ class EventInSideScrollItem extends StatelessWidget {
         width: 200.0,
         child: new GridItem(
           event: event,
+          score: score,
+          daysTill: daysTill,
+          type : type,
+          distance: distance,
         ));
   }
 }
@@ -303,7 +355,7 @@ class FoodTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return new GridTile(
-        child: new Image.network(image),
+        child: new Image.network(image, fit: BoxFit.fill,),
         footer: new GridTileBar(
           title: new Text(name),
           backgroundColor: Colors.black26,

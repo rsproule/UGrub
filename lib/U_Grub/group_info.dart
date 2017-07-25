@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -25,11 +26,9 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
 
 
   Widget _builder(BuildContext context) {
-
     List<Widget> _eventTiles = [];
-    for (MyEvent ev in widget.group.events){
-      _eventTiles.add(new GridItem(event: ev));
-
+    for (MyEvent ev in widget.group.events) {
+      _eventTiles.add(new GridItem(event: ev, type: GridItemType.none,));
     }
 
 
@@ -73,17 +72,22 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
         new SliverList(
             delegate: new SliverChildListDelegate(<Widget>[
               new About(
-                  description: widget.group.description,
-                  members: widget.group.members,
-                  contactInfo: widget.group.contactInfo,
+                description: widget.group.description,
+                members: widget.group.members,
+                contactInfo: widget.group.contactInfo,
               ),
               new Container(
                 padding: const EdgeInsets.only(left: 15.0, top: 15.0),
-                child: new Text("Events:", style: Theme.of(context).textTheme.title),
+                child: new Text("Events:", style: Theme
+                    .of(context)
+                    .textTheme
+                    .title),
               ),
               new Divider(),
-              _eventTiles.length == 0 ?
-              new Center(heightFactor: 5.0 ,child: new Text("No Events Listed")):
+              _eventTiles.length == 0
+                  ?
+              new Center(heightFactor: 5.0, child: new Text("No Events Listed"))
+                  :
               new GridView.count(
                 shrinkWrap: true,
                 primary: false,
@@ -111,14 +115,27 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
   }
 }
 
+enum GridItemType {
+  popular,
+  upcoming,
+  nearby,
+  none
+}
 
 class GridItem extends StatefulWidget {
   const GridItem({
-    this.event
-});
+    this.event,
+    this.score,
+    this.daysTill,
+    this.distance,
+    @required this.type
+  });
 
   final MyEvent event;
-
+  final int score;
+  final int daysTill;
+  final int distance;
+  final GridItemType type;
 
   @override
   _GridItemState createState() => new _GridItemState();
@@ -128,21 +145,23 @@ class _GridItemState extends State<GridItem> {
   bool isFlag;
 
   @override
-  initState(){
+  initState() {
     super.initState();
     isFlag = widget.event.isFlagged;
   }
 
 
-  void onBannerTap(){
-    setState((){
+  void onBannerTap() {
+    setState(() {
       isFlag = !isFlag;
     });
 
     String actionName = isFlag ? " added to" : " removed from";
     Scaffold.of(context).showSnackBar(new SnackBar(
-        content: new Text(widget.event.title + actionName + " flagged events."),
-        backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey : Colors.black54,
+      content: new Text(widget.event.title + actionName + " flagged events."),
+      backgroundColor: Theme
+          .of(context)
+          .brightness == Brightness.dark ? Colors.grey : Colors.black54,
     )
     );
   }
@@ -150,11 +169,13 @@ class _GridItemState extends State<GridItem> {
   @override
   Widget build(BuildContext context) {
     MyEvent event = widget.event;
+    Random r = new Random();
+    String uniqueId = event.title + r.nextInt(10000).toString();
     final Widget image = new GestureDetector(
 
         onTap: () {
           Navigator.of(context).push(new MaterialPageRoute(
-              builder: (BuildContext build){
+              builder: (BuildContext build) {
                 return new EventInfoPage(event: event);
               }
           )
@@ -162,9 +183,9 @@ class _GridItemState extends State<GridItem> {
         },
         child: new Hero(
 
-            key: new Key(event.hashCode.toString()),
-            tag: event.title,
-            child: new Image.network(event.image, fit: BoxFit.cover),
+          key: new Key(event.hashCode.toString()),
+          tag: uniqueId,
+          child: new Image.network(event.image, fit: BoxFit.cover),
 
         )
     );
@@ -172,28 +193,85 @@ class _GridItemState extends State<GridItem> {
 
     final IconData icon = isFlag ? Icons.flag : Icons.outlined_flag;
 
+    final flagWidget = new Icon(
+      icon,
+      color: Colors.white,
+    );
+
+
+    _buildLeadingWidget(String val, IconData icon) {
+      return new Row(
+          children: <Widget>[
+        new Expanded(child: new Container()),
+            new Container(
+              color: Colors.black45,
+              padding: const EdgeInsets.all(4.0),
+              child: new Row(
+                  children: <Widget>[
+                    new Container(padding: const EdgeInsets.only(right: 5.0),
+                        child: new Icon(icon)
+                    ),
+                    new Text(val, style: Theme
+                        .of(context)
+                        .textTheme
+                        .subhead
+                        .copyWith(color: Colors.white),),
+
+                  ]),
+            ),
+
+          ],
+
+      );
+    }
+
+
+
+    Widget header;
+    switch(widget.type){
+      case GridItemType.popular:
+        header = _buildLeadingWidget(widget.score.toString(), Icons.whatshot);
+        break;
+      case GridItemType.upcoming:
+        String s = widget.daysTill == 1 ? "" : "s";
+        String msg = widget.daysTill.toString() + " day" +s +" till";
+        if(widget.daysTill == 0){
+          msg = "Today";
+        }
+        header = _buildLeadingWidget(msg, Icons.today);
+        break;
+      case GridItemType.nearby:
+        String msg = widget.distance.toString() + " miles";
+        header = _buildLeadingWidget(msg, Icons.location_on);
+        break;
+      case GridItemType.none:
+        header = new Container();
+        break;
+    }
 
     return new GridTile(
 
       footer: new GestureDetector(
-        onTap: () { onBannerTap(); },
+        onTap: () {
+          onBannerTap();
+        },
         child: new GridTileBar(
-          backgroundColor: Colors.black45,
-          title: new FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: FractionalOffset.centerLeft,
-            child: new Text(event.title),
-          ),
-          subtitle: new FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: FractionalOffset.centerLeft,
-            child: new Text(event.organization),
-          ),
-          trailing: new Icon(
-            icon,
-            color: Colors.white,
-          ),
+            backgroundColor: Colors.black45,
+            title: new FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: FractionalOffset.centerLeft,
+              child: new Text(event.title),
+            ),
+            subtitle: new FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: FractionalOffset.centerLeft,
+              child: new Text(event.organization),
+            ),
+            trailing: flagWidget
         ),
+      ),
+      header: new GridTileBar(
+        title: header,
       ),
       child: image,
     );
@@ -235,17 +313,18 @@ class About extends StatelessWidget {
         .of(context)
         .accentColor;
 
-    final String numMembers = this.members.length.toString() + " Member" + (this.members.length==1 ? "": "s");
+    final String numMembers = this.members.length.toString() + " Member" +
+        (this.members.length == 1 ? "" : "s");
 
 
     Widget memberHeader = new Container(
       padding: const EdgeInsets.all(10.0),
-      child: new Text(numMembers+ ":", style: descriptionStyle,),
+      child: new Text(numMembers + ":", style: descriptionStyle,),
     );
 
     List<Widget> _memberTiles = [memberHeader, new Divider()];
 
-    for (User m in members){
+    for (User m in members) {
       _memberTiles.add(new MemberTile(member: m,));
     }
 
@@ -274,19 +353,21 @@ class About extends StatelessWidget {
     ],);
 
     Widget membersButton = new MaterialButton(
-        onPressed: (){
-          showDialog(
-              context: context,
-              child: new Dialog(
-                child: new ListView(
-                 children: _memberTiles,
-                 shrinkWrap: true,
-                ),
-              )
-          );
-        },
-        child: new Text(numMembers),
-        color: Theme.of(context).accentColor,
+      onPressed: () {
+        showDialog(
+            context: context,
+            child: new Dialog(
+              child: new ListView(
+                children: _memberTiles,
+                shrinkWrap: true,
+              ),
+            )
+        );
+      },
+      child: new Text(numMembers),
+      color: Theme
+          .of(context)
+          .accentColor,
     );
 
 
@@ -327,11 +408,11 @@ class MemberTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return new ListTile(
-      title: new Text(member.name),
-      leading: new CircleAvatar(
-        child: new Image.network(member.image)
-      ),
-      onTap: this.onTap
+        title: new Text(member.name),
+        leading: new CircleAvatar(
+            child: new Image.network(member.image)
+        ),
+        onTap: this.onTap
     );
   }
 
