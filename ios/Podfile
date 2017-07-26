@@ -1,12 +1,9 @@
 # Uncomment this line to define a global platform for your project
 # platform :ios, '9.0'
 
- use_frameworks!
 
- pre_install do |installer|
-     # workaround for https://github.com/CocoaPods/CocoaPods/issues/3289
-     def installer.verify_no_static_framework_transitive_dependencies; end
- end
+
+
 
 if ENV['FLUTTER_FRAMEWORK_DIR'] == nil
   abort('Please set FLUTTER_FRAMEWORK_DIR to the directory containing Flutter.framework')
@@ -14,7 +11,6 @@ end
 
 target 'Runner' do
   # Pods for Runner
-
 
   # Flutter Pods
   pod 'Flutter', :path => ENV['FLUTTER_FRAMEWORK_DIR']
