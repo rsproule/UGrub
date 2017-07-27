@@ -1,3 +1,4 @@
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'events.dart';
@@ -133,7 +134,7 @@ class _EventInfoPageState extends State<EventInfoPage> {
 class About extends StatelessWidget {
   final String description;
   final String organization;
-  final String foodType;
+  final foodType;
 
   const About({
     this.description,
@@ -167,22 +168,47 @@ class About extends StatelessWidget {
 
 
     Widget header = new Text("About",
-      style: descriptionStyle.copyWith(color: color, fontSize: 28.0));
+        style: descriptionStyle.copyWith(color: color, fontSize: 28.0));
     Widget descrip = new Text("     " + description, style: descriptionStyle);
 
-    Widget food = new Row(children: <Widget>[
-      new Icon(Icons.fastfood, color: color),
-      new Padding(
-        padding: const EdgeInsets.only(left: 8.0),
-        child: new Text(foodType, style: descriptionStyle,),
-      )
-    ],);
+    Widget food = new Text(
+      foodType.toString().replaceAll('[', "").replaceAll("]", ""),
+      style: descriptionStyle,);
+    if (foodType is String) {
+      food = new CategoryTag(category: foodType.toString().replaceAll('[', ""),
+        style: descriptionStyle, color: color);
+    }
+    else if (foodType is List) {
+      List<Widget> _categories = [];
+      for (String f in foodType) {
+        Widget cat = new CategoryTag(
+            category: f.replaceAll("[", "").replaceAll(",", "").replaceAll(
+                "]", ""), style: descriptionStyle, color : color);
+        _categories.add(cat);
+      }
+      List<Widget> formatted = [];
+      int i = 0;
+      while(i < _categories.length){
+        Widget tempRow =  new Row(
+          children: _categories.sublist(i, i+2),
+        );
+
+        formatted.add(tempRow);
+        i+=2;
+
+      }
+
+      food = new Column(
+        children: formatted
+      );
+    }
+
 
     Widget org = new Row(children: <Widget>[
       new Icon(Icons.group, color: color,),
       new Padding(
         padding: const EdgeInsets.only(left: 8.0),
-        child: new Text(organization, style: descriptionStyle,),
+        child: new Text(organization, style: descriptionStyle),
       )
 
     ],);
@@ -203,6 +229,50 @@ class About extends StatelessWidget {
         children: col, crossAxisAlignment: CrossAxisAlignment.start,),
       padding: const EdgeInsets.only(
           top: 30.0, bottom: 20.0, left: 25.0, right: 25.0),
+    );
+  }
+}
+
+
+class CategoryTag extends StatelessWidget {
+  const CategoryTag({
+    this.category,
+    this.style,
+    this.color
+  });
+
+  final Color color;
+  final TextStyle style;
+  final String category;
+
+  @override
+  Widget build(BuildContext context) {
+    return new Container(
+        padding: const EdgeInsets.all(10.0),
+        margin: const EdgeInsets.all(4.0),
+        decoration: new BoxDecoration(
+            borderRadius: const BorderRadius.all(
+                const Radius.elliptical(30.0, 30.0)),
+            color: color
+        ),
+        child: new InkWell(
+              splashColor: Colors.black45,
+              highlightColor: Colors.black12,
+              onTap: () {
+                DatabaseReference query = FirebaseDatabase.instance.reference()
+                    .child("categories")
+                    .child(category);
+                Navigator.of(context).push(new MaterialPageRoute(
+                    builder: (BuildContext build) {
+                      return new EventFeed(
+                        query: query, hasAppBar: true, title: category,);
+                    }
+                )
+                );
+              },
+              child: new Text(category, style: style,)
+        ),
+
     );
   }
 }

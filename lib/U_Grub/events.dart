@@ -27,10 +27,10 @@ class EventFeed extends StatefulWidget {
 }
 
 class _EventFeedState extends State<EventFeed> {
-  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey = new GlobalKey<
-      RefreshIndicatorState>();
-  static final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<
-      ScaffoldState>();
+//  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey = new GlobalKey<
+//      RefreshIndicatorState>();
+//  static final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<
+//      ScaffoldState>();
 
 
   Comparator time = (a, b) {
@@ -72,12 +72,13 @@ class _EventFeedState extends State<EventFeed> {
 
 
     return new Scaffold(
-        key: _scaffoldKey,
-        body: new RefreshIndicator(
-            key: _refreshIndicatorKey,
-            child: mainFeed,
-            onRefresh: _handleRefresh
-        ),
+//        key: _scaffoldKey,
+        body: mainFeed,
+//        new RefreshIndicator(
+//            key: _refreshIndicatorKey,
+//            child: mainFeed,
+//            onRefresh: _handleRefresh
+//        ),
         appBar: widget.hasAppBar ? new AppBar(
           title: new Text(widget.title),
           leading: widget.showDrawer != null ? new IconButton(
@@ -104,24 +105,24 @@ class _EventFeedState extends State<EventFeed> {
   }
 
 
-  Future<Null> _handleRefresh() {
-    // TODO make this actually refresh not just set a timer
-    final Completer<Null> completer = new Completer<Null>();
-    new Timer(const Duration(seconds: 1), () {
-      completer.complete(null);
-    });
-    return completer.future.then((context) {
-      _scaffoldKey.currentState?.showSnackBar(new SnackBar(
-          content: const Text("Refresh complete"),
-          action: new SnackBarAction(
-              label: 'RETRY',
-              onPressed: () {
-                _refreshIndicatorKey.currentState.show();
-              }
-          )
-      ));
-    });
-  }
+//  Future<Null> _handleRefresh() {
+//    // TODO make this actually refresh not just set a timer
+//    final Completer<Null> completer = new Completer<Null>();
+//    new Timer(const Duration(seconds: 1), () {
+//      completer.complete(null);
+//    });
+//    return completer.future.then((context) {
+//      _scaffoldKey.currentState?.showSnackBar(new SnackBar(
+//          content: const Text("Refresh complete"),
+//          action: new SnackBarAction(
+//              label: 'RETRY',
+//              onPressed: () {
+//                _refreshIndicatorKey.currentState.show();
+//              }
+//          )
+//      ));
+//    });
+//  }
 }
 
 class DateDivider extends StatelessWidget {
@@ -175,7 +176,7 @@ class MyEvent {
   final String title;
   final String description;
   final String organization;
-  final String foodType;
+  final foodType;
   final String location;
   final String image;
   final DateTime date;

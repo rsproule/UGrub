@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_database/ui/firebase_animated_list.dart';
 import 'package:flutter/material.dart';
@@ -87,12 +88,16 @@ class _HomePageFeedState extends State<HomePageFeed> {
         .copyWith(color: Theme.of(context).accentColor);
 
     return new Container(
-        padding: const EdgeInsets.only(top: 10.0),
-        child: new Center(
-          child: new Text(
-            title,
-            style: headerStyle,
-          ),
+        padding: const EdgeInsets.only(top: 10.0, left: 20.0, right: 20.0),
+        child: new Row(
+          children: <Widget>[
+            new Text(
+              title,
+              style: headerStyle,
+            ),
+            new Expanded(child: new Container()),
+            new Icon(Icons.arrow_right)
+          ],
         ));
   }
 
@@ -204,22 +209,50 @@ class _HomePageFeedState extends State<HomePageFeed> {
     Map b = snap.value;
     List<FoodTile> _items = [];
 
+    TextStyle descriptionStyle =
+        Theme.of(context).brightness == Brightness.light
+            ? Theme.of(context).textTheme.subhead.copyWith(
+                fontFamily: "Raleway",
+                textBaseline: TextBaseline.alphabetic,
+                color: Colors.black54)
+            : Theme.of(context).textTheme.subhead;
+
     b.forEach((k, v) {
-      DatabaseReference query = FirebaseDatabase.instance.reference().child("categories").child(k);
+      DatabaseReference query =
+          FirebaseDatabase.instance.reference().child("categories").child(k);
       Map m = v;
       int count = m.length;
 
-      FoodTile _cat = new FoodTile(
+      Random r = new Random();
+      List<MaterialColor> colors = Colors.primaries;
+      Color randColor = colors.elementAt(r.nextInt(colors.length));
+      String name = k;
+      String initials = name.substring(0, 1);
 
-        name: k,
-        image: new Container(),
+      FoodTile _cat = new FoodTile(
+        name: name,
+        image: new Container(
+          color: randColor.withOpacity(.4),
+          width: 50.0,
+          height: 50.0,
+          child: new CircleAvatar(
+              child: new Text(
+                name.substring(0, 1),
+                style: descriptionStyle,
+              ),
+              backgroundColor: randColor),
+        ),
         count: count,
 //        events: v,
         query: query,
-
       );
       _items.add(_cat);
     });
+    Comparator count = (a, b) {
+      return (b.count).compareTo(a.count);
+    };
+
+    _items.sort(count);
 
     setState(() {
       allSideFeed[index] = _items;
@@ -250,6 +283,13 @@ class _HomePageFeedState extends State<HomePageFeed> {
 
   @override
   Widget build(BuildContext context) {
+    TextStyle descriptionStyle =
+        Theme.of(context).brightness == Brightness.light
+            ? Theme.of(context).textTheme.subhead.copyWith(
+                fontFamily: "Raleway",
+                textBaseline: TextBaseline.alphabetic,
+                color: Colors.black54)
+            : Theme.of(context).textTheme.subhead;
     final double systemTopPadding = MediaQuery.of(context).padding.top;
 
     Widget dynamicAppBar = new SliverAppBar(
@@ -279,6 +319,9 @@ class _HomePageFeedState extends State<HomePageFeed> {
         buildSideScroll(allSideFeed[2]),
         new Divider(),
         buildHeader("Categories:"),
+        new Divider(
+          color: Colors.transparent,
+        ),
         new GridView.count(
           shrinkWrap: true,
           primary: false,
@@ -318,12 +361,8 @@ class EventInSideScrollItem extends StatelessWidget {
   final int distance;
   final GridItemType type;
 
-
-
   @override
   Widget build(BuildContext context) {
-
-
     return new Container(
         padding: const EdgeInsets.all(15.0),
         width: 200.0,
@@ -338,13 +377,7 @@ class EventInSideScrollItem extends StatelessWidget {
 }
 
 class FoodTile extends StatelessWidget {
-  const FoodTile({
-    this.image,
-    this.name,
-    this.events,
-    this.query,
-    this.count
-  });
+  const FoodTile({this.image, this.name, this.events, this.query, this.count});
 
   final Widget image;
   final String name;
@@ -361,45 +394,51 @@ class FoodTile extends StatelessWidget {
           new Container(
             color: Colors.black45,
             padding: const EdgeInsets.all(4.0),
-            child: new Row(
-                children: <Widget>[
-                  new Container(padding: const EdgeInsets.only(right: 5.0),
-                      child: new Icon(icon)
-                  ),
-                  new Text(val, style: Theme
-                      .of(context)
-                      .textTheme
-                      .subhead
-                      .copyWith(color: Colors.white),),
-
-                ]),
+            child: new Row(children: <Widget>[
+              new Container(
+                  padding: const EdgeInsets.only(right: 5.0),
+                  child: new Icon(
+                    icon,
+                    color: Colors.white,
+                  )),
+              new Text(
+                val,
+                style: Theme
+                    .of(context)
+                    .textTheme
+                    .subhead
+                    .copyWith(color: Colors.white),
+              ),
+            ]),
           ),
-
         ],
-
       );
     }
 
-    return new GestureDetector(
-      onTap: (){
-        Navigator.of(context).push(new MaterialPageRoute(
-            builder: (BuildContext build) {
-              return new EventFeed(query: query, hasAppBar: true, title: name,);
-            }
-        )
-        );
-      },
-      child: new GridTile(
-
-        child: new FittedBox(
-          fit: BoxFit.fill,
-          child: image,
+    return new Container(
+      child: new GestureDetector(
+        onTap: () {
+          Navigator
+              .of(context)
+              .push(new MaterialPageRoute(builder: (BuildContext build) {
+            return new EventFeed(
+              query: query,
+              hasAppBar: true,
+              title: name,
+            );
+          }));
+        },
+        child: new GridTile(
+          child: new FittedBox(
+            fit: BoxFit.fill,
+            child: image,
+          ),
+          footer: new GridTileBar(
+            title: new Text(name),
+            backgroundColor: Colors.black26,
+          ),
+          header: _buildLeadingWidget(count.toString(), Icons.event_available),
         ),
-        footer: new GridTileBar(
-          title: new Text(name),
-          backgroundColor: Colors.black26,
-        ),
-        header: _buildLeadingWidget(count.toString(), Icons.event),
       ),
     );
   }
