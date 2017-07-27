@@ -26,6 +26,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
             onPressed: widget.showDrawer
         ),
         title: new Text("Notifications"),
+
+      ),
+      body: new Center(
+        child: new Text("Nothing Here Yet"),
       ),
     );
 

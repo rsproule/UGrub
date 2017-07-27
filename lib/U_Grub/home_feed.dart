@@ -8,12 +8,9 @@ import 'events.dart';
 import 'group_info.dart';
 
 class HomePageFeed extends StatefulWidget {
-  const HomePageFeed({
-    Key key,
-    this.showDrawer,
-    this.user,
-    this.currentLocation
-  }) : super(key: key);
+  const HomePageFeed(
+      {Key key, this.showDrawer, this.user, this.currentLocation})
+      : super(key: key);
 
   final showDrawer;
   final GoogleSignInAccount user;
@@ -40,13 +37,16 @@ class _HomePageFeedState extends State<HomePageFeed> {
 
   buildAppBar() {
     return new Card(
-      child: new InkWell(
-        onTap: _goToSearchView,
-        child: new ListTile(
-          title: new Text("Search UGrub"),
-          leading: new IconButton(
-              icon: new Icon(Icons.menu), onPressed: widget.showDrawer),
-          trailing: new Icon(Icons.search),
+      child: new ListTile(
+        title: new InkWell(
+          child: new Text("Search UGrub"),
+          onTap: _goToSearchView,
+        ),
+        leading: new IconButton(
+            icon: new Icon(Icons.menu), onPressed: widget.showDrawer),
+        trailing: new InkWell(
+          child: new Icon(Icons.search),
+          onTap: _goToSearchView,
         ),
       ),
     );
@@ -57,7 +57,14 @@ class _HomePageFeedState extends State<HomePageFeed> {
       child: new ListTile(
         title: new Container(
           padding: const EdgeInsets.only(left: 35.0),
-          child: new TextFormField(
+          child: new TextField(
+            onSubmitted: (val) {
+              if (val == "") {
+                // Just exits the search view when there is nothing there
+                Navigator.of(context).pop();
+              }
+            },
+            keyboardType: TextInputType.text,
             autofocus: true,
             controller: _searchQuery,
             decoration: new InputDecoration(
@@ -178,10 +185,6 @@ class _HomePageFeedState extends State<HomePageFeed> {
   }
 
   _get_distance(double latitude, double longitude, currentLocation) {
-    print(latitude);
-    print(longitude);
-    print(currentLocation);
-
     return 5;
   }
 
@@ -197,67 +200,35 @@ class _HomePageFeedState extends State<HomePageFeed> {
   }
 
   getFoodCategories(DatabaseReference query, int index) async {
-//    DataSnapshot snap = await query.once();
-//    Map b = snap.value;
+    DataSnapshot snap = await query.once();
+    Map b = snap.value;
     List<FoodTile> _items = [];
-//
-//    b.forEach((k, snap) {
-//      MyEvent event = new MyEvent(
-//          title: snap['title'],
-//          description: snap['description'],
-//          location: snap['location'],
-//          organization: snap['organization'],
-//          date: DateTime.parse(snap['date']),
-//          startTime: snap['startTime'],
-//          endTime: snap['endTime'],
-//          image: snap['image'],
-//          foodType: snap['foodType'],
-//          isFlagged: false);
-//
-//      EventInSideScrollItem item = new EventInSideScrollItem(
-//        event: event,
-//      );
-//      _items.add(item);
-//    });
-//    Comparator time = (a, b) {
-//      DateTime aDate = a.event.date;
-//      DateTime bDate = b.event.date;
-//      return aDate.compareTo(bDate);
-//    };
-//
-//    _items.sort(time);
-//
-//
-//    _items.removeWhere((e){
-//      DateTime now = new DateTime.now();
-//
-//      return now.isAfter(e.event.date);
-//    });
 
-    Widget tacos = new FoodTile(
-      image:
-          "https://www.tacobueno.com/assets/food/tacos/Taco_BFT_Beef_990x725.jpg",
-      name: "Tacos",
-    );
-    _items.add(tacos);
+    b.forEach((k, v) {
+      DatabaseReference query = FirebaseDatabase.instance.reference().child("categories").child(k);
+      Map m = v;
+      int count = m.length;
 
-    Widget iceCream = new FoodTile(
-      name: "Ice Cream",
-      image:
-          "https://www-tc.pbs.org/food/files/2012/07/History-of-Ice-Cream-1.jpg",
-    );
-    _items.add(iceCream);
+      FoodTile _cat = new FoodTile(
+
+        name: k,
+        image: new Container(),
+        count: count,
+//        events: v,
+        query: query,
+
+      );
+      _items.add(_cat);
+    });
 
     setState(() {
       allSideFeed[index] = _items;
     });
   }
 
-
   @override
   void initState() {
     super.initState();
-
 
     //TODO edit the query here
     DatabaseReference popularEventsQuery =
@@ -273,7 +244,7 @@ class _HomePageFeedState extends State<HomePageFeed> {
     getSideScrollItems(nearbyEventsQuery, 2, GridItemType.nearby);
 
     DatabaseReference foodTypesQuery =
-        FirebaseDatabase.instance.reference().child("popular");
+        FirebaseDatabase.instance.reference().child("categories");
     getFoodCategories(foodTypesQuery, 3);
   }
 
@@ -289,7 +260,8 @@ class _HomePageFeedState extends State<HomePageFeed> {
               new EdgeInsets.only(top: systemTopPadding, left: 5.0, right: 5.0),
           child: _isSearching ? buildSearchBar() : buildAppBar()),
       backgroundColor: Colors.transparent,
-      pinned: true,
+      snap: false,
+      floating: true,
     );
     final Orientation orientation = MediaQuery.of(context).orientation;
 
@@ -306,7 +278,7 @@ class _HomePageFeedState extends State<HomePageFeed> {
         buildHeader("Nearby Events:"),
         buildSideScroll(allSideFeed[2]),
         new Divider(),
-        buildHeader("Food:"),
+        buildHeader("Categories:"),
         new GridView.count(
           shrinkWrap: true,
           primary: false,
@@ -346,8 +318,12 @@ class EventInSideScrollItem extends StatelessWidget {
   final int distance;
   final GridItemType type;
 
+
+
   @override
   Widget build(BuildContext context) {
+
+
     return new Container(
         padding: const EdgeInsets.all(15.0),
         width: 200.0,
@@ -362,21 +338,68 @@ class EventInSideScrollItem extends StatelessWidget {
 }
 
 class FoodTile extends StatelessWidget {
-  const FoodTile({this.image, this.name});
+  const FoodTile({
+    this.image,
+    this.name,
+    this.events,
+    this.query,
+    this.count
+  });
 
-  final String image;
+  final Widget image;
   final String name;
+  final int count;
+  final List<MyEvent> events;
+  final DatabaseReference query;
 
   @override
   Widget build(BuildContext context) {
-    return new GridTile(
-      child: new Image.network(
-        image,
-        fit: BoxFit.fill,
-      ),
-      footer: new GridTileBar(
-        title: new Text(name),
-        backgroundColor: Colors.black26,
+    _buildLeadingWidget(String val, IconData icon) {
+      return new Row(
+        children: <Widget>[
+          new Expanded(child: new Container()),
+          new Container(
+            color: Colors.black45,
+            padding: const EdgeInsets.all(4.0),
+            child: new Row(
+                children: <Widget>[
+                  new Container(padding: const EdgeInsets.only(right: 5.0),
+                      child: new Icon(icon)
+                  ),
+                  new Text(val, style: Theme
+                      .of(context)
+                      .textTheme
+                      .subhead
+                      .copyWith(color: Colors.white),),
+
+                ]),
+          ),
+
+        ],
+
+      );
+    }
+
+    return new GestureDetector(
+      onTap: (){
+        Navigator.of(context).push(new MaterialPageRoute(
+            builder: (BuildContext build) {
+              return new EventFeed(query: query, hasAppBar: true, title: name,);
+            }
+        )
+        );
+      },
+      child: new GridTile(
+
+        child: new FittedBox(
+          fit: BoxFit.fill,
+          child: image,
+        ),
+        footer: new GridTileBar(
+          title: new Text(name),
+          backgroundColor: Colors.black26,
+        ),
+        header: _buildLeadingWidget(count.toString(), Icons.event),
       ),
     );
   }

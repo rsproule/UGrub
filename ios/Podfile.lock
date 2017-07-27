@@ -86,7 +86,7 @@ PODS:
     - Flutter
 
 DEPENDENCIES:
-  - firebase_analytics (from `/Users/ryansproule/.pub-cache/hosted/pub.dartlang.org/firebase_analytics-0.0.4/ios`)
+  - firebase_analytics (from `/Users/ryansproule/.pub-cache/hosted/pub.dartlang.org/firebase_analytics-0.1.0/ios`)
   - firebase_auth (from `/Users/ryansproule/.pub-cache/hosted/pub.dartlang.org/firebase_auth-0.1.1/ios`)
   - firebase_database (from `/Users/ryansproule/.pub-cache/hosted/pub.dartlang.org/firebase_database-0.0.12/ios`)
   - firebase_storage (from `/Users/ryansproule/.pub-cache/hosted/pub.dartlang.org/firebase_storage-0.0.5/ios`)
@@ -97,7 +97,7 @@ DEPENDENCIES:
 
 EXTERNAL SOURCES:
   firebase_analytics:
-    :path: /Users/ryansproule/.pub-cache/hosted/pub.dartlang.org/firebase_analytics-0.0.4/ios
+    :path: /Users/ryansproule/.pub-cache/hosted/pub.dartlang.org/firebase_analytics-0.1.0/ios
   firebase_auth:
     :path: /Users/ryansproule/.pub-cache/hosted/pub.dartlang.org/firebase_auth-0.1.1/ios
   firebase_database:
@@ -136,6 +136,6 @@ SPEC CHECKSUMS:
   image_picker: a211f28b95a560433c00f5cd3773f4710a20404d
   shared_preferences: 1feebfa37bb57264736e16865e7ffae7fc99b523
 
-PODFILE CHECKSUM: a453ff39e2d7207a92930f2d4e39724079795200
+PODFILE CHECKSUM: ebabbb4620dcadeb773a9d5b756baa623787aa9f
 
 COCOAPODS: 1.2.1

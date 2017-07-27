@@ -95,7 +95,7 @@ class _MainFeedState extends State<MainFeed> with TickerProviderStateMixin {
 //        ),
 
       new HomePageFeed(user: widget.user, showDrawer: widget.showDrawer, currentLocation : widget.currentLocation),
-      new EventFeed(query: query, showDrawer: widget.showDrawer, hasAppBar: true,),
+      new EventFeed(query: query, showDrawer: widget.showDrawer, hasAppBar: true, title: "Saved Events",),
       new NotificationsPage(showDrawer: widget.showDrawer, user: widget.user),
       new ProfilePage(showDrawer: widget.showDrawer, user: widget.user,)
     ];

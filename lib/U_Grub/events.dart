@@ -10,12 +10,14 @@ class EventFeed extends StatefulWidget {
   const EventFeed({
     Key key,
     this.showDrawer,
+    @required this.title,
     @required this.query,
     @required this.hasAppBar
 
 
   }) : super(key: key);
 
+  final String title;
   final bool hasAppBar;
   final Function showDrawer;
   final DatabaseReference query;
@@ -77,11 +79,11 @@ class _EventFeedState extends State<EventFeed> {
             onRefresh: _handleRefresh
         ),
         appBar: widget.hasAppBar ? new AppBar(
-          title: new Text("Saved Events"),
-          leading: new IconButton(
+          title: new Text(widget.title),
+          leading: widget.showDrawer != null ? new IconButton(
               icon: new Icon(Icons.menu),
               onPressed: widget.showDrawer
-          ),
+          ): null,
           actions: <Widget>[
             new IconButton(
                 icon: _isCalendarMode ? new Icon(Icons.list) : new Icon(Icons.calendar_today),
