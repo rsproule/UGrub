@@ -7,23 +7,25 @@ import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'events.dart';
 import 'group_info.dart';
+import 'category_tile.dart';
+import 'drawer.dart';
+import 'package:u_grub2/U_Grub/search.dart';
 
 class HomePageFeed extends StatefulWidget {
   const HomePageFeed(
-      {Key key, this.showDrawer, this.user, this.currentLocation})
+      {Key key, this.showDrawer, this.user, this.currentLocation, this.drawer})
       : super(key: key);
 
   final showDrawer;
   final GoogleSignInAccount user;
   final currentLocation;
+  final AppDrawer drawer;
 
   @override
   _HomePageFeedState createState() => new _HomePageFeedState();
 }
 
 class _HomePageFeedState extends State<HomePageFeed> {
-  bool _isSearching = false;
-  TextEditingController _searchQuery = new TextEditingController();
 
   static List<Widget> _popular_events = [];
   static List<Widget> _nearby_events = [];
@@ -37,48 +39,34 @@ class _HomePageFeedState extends State<HomePageFeed> {
   ];
 
   buildAppBar() {
-    return new Card(
+    TextStyle fontStyle = Theme.of(context).brightness == Brightness.light
+        ? Theme.of(context).textTheme.title.copyWith(
+            fontFamily: "Raleway",
+            textBaseline: TextBaseline.alphabetic,
+            color: Colors.black54)
+        : Theme.of(context).textTheme.title;
+
+    Widget appBar = new Card(
       child: new ListTile(
         title: new InkWell(
-          child: new Text("Search UGrub"),
+          child: new Center(
+              child: new Text(
+            "Search UGrub",
+            style: fontStyle,
+          )),
           onTap: _goToSearchView,
         ),
-        leading: new IconButton(
-            icon: new Icon(Icons.menu), onPressed: widget.showDrawer),
         trailing: new InkWell(
           child: new Icon(Icons.search),
           onTap: _goToSearchView,
         ),
       ),
     );
+
+    return appBar;
   }
 
-  buildSearchBar() {
-    return new Card(
-      child: new ListTile(
-        title: new Container(
-          padding: const EdgeInsets.only(left: 35.0),
-          child: new TextField(
-            onSubmitted: (val) {
-              if (val == "") {
-                // Just exits the search view when there is nothing there
-                Navigator.of(context).pop();
-              }
-            },
-            keyboardType: TextInputType.text,
-            autofocus: true,
-            controller: _searchQuery,
-            decoration: new InputDecoration(
-              isDense: true,
-              hintText: "Search",
-              hideDivider: true,
-            ),
-            style: Theme.of(context).textTheme.title,
-          ),
-        ),
-      ),
-    );
-  }
+
 
   buildHeader(String title) {
     TextStyle headerStyle = Theme
@@ -298,14 +286,14 @@ class _HomePageFeedState extends State<HomePageFeed> {
       flexibleSpace: new Container(
           padding:
               new EdgeInsets.only(top: systemTopPadding, left: 5.0, right: 5.0),
-          child: _isSearching ? buildSearchBar() : buildAppBar()),
+          child: buildAppBar()),
       backgroundColor: Colors.transparent,
       snap: false,
       floating: true,
     );
     final Orientation orientation = MediaQuery.of(context).orientation;
 
-    return new CustomScrollView(slivers: <Widget>[
+    Widget mainScreen = new CustomScrollView(slivers: <Widget>[
       dynamicAppBar,
       new SliverList(
           delegate: new SliverChildListDelegate(<Widget>[
@@ -334,20 +322,21 @@ class _HomePageFeedState extends State<HomePageFeed> {
         )
       ])),
     ]);
+
+    return new Scaffold(
+      body: mainScreen,
+      drawer: widget.drawer,
+    );
   }
 
   void _goToSearchView() {
-    ModalRoute.of(context).addLocalHistoryEntry(new LocalHistoryEntry(
-      onRemove: () {
-        setState(() {
-          _isSearching = false;
-          _searchQuery.clear();
-        });
-      },
-    ));
-    setState(() {
-      _isSearching = true;
-    });
+    Navigator.of(context).push(new PageRouteBuilder(
+            pageBuilder: (BuildContext context, _, __) {
+          return new SearchPage();
+        }, transitionsBuilder:
+                (_, Animation<double> animation, __, Widget child) {
+          return new FadeTransition(opacity: animation, child: child);
+        }));
   }
 }
 
@@ -373,73 +362,5 @@ class EventInSideScrollItem extends StatelessWidget {
           type: type,
           distance: distance,
         ));
-  }
-}
-
-class FoodTile extends StatelessWidget {
-  const FoodTile({this.image, this.name, this.events, this.query, this.count});
-
-  final Widget image;
-  final String name;
-  final int count;
-  final List<MyEvent> events;
-  final DatabaseReference query;
-
-  @override
-  Widget build(BuildContext context) {
-    _buildLeadingWidget(String val, IconData icon) {
-      return new Row(
-        children: <Widget>[
-          new Expanded(child: new Container()),
-          new Container(
-            color: Colors.black45,
-            padding: const EdgeInsets.all(4.0),
-            child: new Row(children: <Widget>[
-              new Container(
-                  padding: const EdgeInsets.only(right: 5.0),
-                  child: new Icon(
-                    icon,
-                    color: Colors.white,
-                  )),
-              new Text(
-                val,
-                style: Theme
-                    .of(context)
-                    .textTheme
-                    .subhead
-                    .copyWith(color: Colors.white),
-              ),
-            ]),
-          ),
-        ],
-      );
-    }
-
-    return new Container(
-      child: new GestureDetector(
-        onTap: () {
-          Navigator
-              .of(context)
-              .push(new MaterialPageRoute(builder: (BuildContext build) {
-            return new EventFeed(
-              query: query,
-              hasAppBar: true,
-              title: name,
-            );
-          }));
-        },
-        child: new GridTile(
-          child: new FittedBox(
-            fit: BoxFit.fill,
-            child: image,
-          ),
-          footer: new GridTileBar(
-            title: new Text(name),
-            backgroundColor: Colors.black26,
-          ),
-          header: _buildLeadingWidget(count.toString(), Icons.event_available),
-        ),
-      ),
-    );
   }
 }

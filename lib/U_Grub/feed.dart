@@ -4,9 +4,10 @@ import 'package:flutter/material.dart';
 import 'events.dart';
 import 'groups.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:u_grub2/U_Grub/add_group.dart';
-import 'package:u_grub2/U_Grub/home_feed.dart';
-import 'package:u_grub2/U_Grub/notifications_page.dart';
+import 'add_group.dart';
+import 'drawer.dart';
+import 'home_feed.dart';
+import 'notifications_page.dart';
 import 'profile_page.dart';
 
 
@@ -15,13 +16,15 @@ class MainFeed extends StatefulWidget {
     Key key,
     this.currentLocation,
     this.showDrawer,
-    this.user
+    this.user,
+    this.drawer
 
   }) : super(key: key);
 
   final showDrawer;
   final GoogleSignInAccount user;
   final currentLocation;
+  final AppDrawer drawer;
 
   @override
   _MainFeedState createState() => new _MainFeedState();
@@ -94,7 +97,7 @@ class _MainFeedState extends State<MainFeed> with TickerProviderStateMixin {
 //            padding: const EdgeInsets.only(top: 10.0),
 //        ),
 
-      new HomePageFeed(user: widget.user, showDrawer: widget.showDrawer, currentLocation : widget.currentLocation),
+      new HomePageFeed(user: widget.user, showDrawer: widget.showDrawer, drawer: widget.drawer, currentLocation : widget.currentLocation),
       new EventFeed(query: query, showDrawer: widget.showDrawer, hasAppBar: true, title: "Saved Events",),
       new NotificationsPage(showDrawer: widget.showDrawer, user: widget.user),
       new ProfilePage(showDrawer: widget.showDrawer, user: widget.user,)

@@ -42,15 +42,17 @@ class _GrubHomeState extends State<GrubHome> {
 
   @override
   Widget build(BuildContext context) {
+    Widget drawer = new AppDrawer(
+      isLightTheme: widget.isLightTheme,
+      onThemeChanged: widget.onThemeChanged,
+      themeColor: widget.themeColor,
+      onColorChanged: widget.onColorChanged,
+
+    );
+
     Widget home = new Scaffold(
       key: _scaffoldKey,
-      drawer: new AppDrawer(
-        isLightTheme: widget.isLightTheme,
-        onThemeChanged: widget.onThemeChanged,
-        themeColor: widget.themeColor,
-        onColorChanged: widget.onColorChanged,
-
-      ),
+      drawer: drawer,
 
 //      appBar: new AppBar(
 //        toolbarOpacity: .1,
@@ -59,7 +61,8 @@ class _GrubHomeState extends State<GrubHome> {
       body: new MainFeed(
         showDrawer: showDrawer,
         user: widget.user,
-        currentLocation: widget.currentLocation
+        currentLocation: widget.currentLocation,
+        drawer: drawer
       ),
 
 
