@@ -1,17 +1,20 @@
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'groups.dart';
 import 'group_info.dart';
 import 'events.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'user.dart';
 
 class GroupLandingPage extends StatefulWidget {
   const GroupLandingPage({
-    this.group
+    this.group,
+    @required this.user
   });
 
   final GroupItem group;
-
+  final GoogleSignInAccount user;
 
   @override
   _GroupLandingPageState createState() => new _GroupLandingPageState();
@@ -63,7 +66,7 @@ class _GroupLandingPageState extends State<GroupLandingPage> {
                   /* open the group info page */
                   Navigator.of(context).push(new MaterialPageRoute(
                       builder: (BuildContext build) {
-                        return new GroupInfoPage(group: widget.group);
+                        return new GroupInfoPage(group: widget.group, user: widget.user,);
                       }
                   ));
                 }
@@ -73,7 +76,7 @@ class _GroupLandingPageState extends State<GroupLandingPage> {
         ),
 
 
-        body: new EventFeed(query: query, hasAppBar: false, title: null,)
+        body: new EventFeed(query: query, hasAppBar: false, title: null,user: widget.user,)
     );
   }
 }

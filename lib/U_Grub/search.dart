@@ -55,6 +55,7 @@ class _SearchPageState extends State<SearchPage> {
 
     Widget dynamicAppBar = new SliverAppBar(
       iconTheme: IconTheme.of(context),
+
       elevation: 0.0,
       flexibleSpace: new Container(
           padding:

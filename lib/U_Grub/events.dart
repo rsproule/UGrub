@@ -5,6 +5,7 @@ import "package:firebase_database/firebase_database.dart";
 import 'package:firebase_database/ui/firebase_animated_list.dart';
 import 'event_info.dart';
 import 'groups.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class EventFeed extends StatefulWidget {
   const EventFeed({
@@ -12,7 +13,8 @@ class EventFeed extends StatefulWidget {
     this.showDrawer,
     @required this.title,
     @required this.query,
-    @required this.hasAppBar
+    @required this.hasAppBar,
+    @required this.user
 
 
   }) : super(key: key);
@@ -21,6 +23,7 @@ class EventFeed extends StatefulWidget {
   final bool hasAppBar;
   final Function showDrawer;
   final DatabaseReference query;
+  final GoogleSignInAccount user;
 
   @override
   _EventFeedState createState() => new _EventFeedState();
@@ -49,6 +52,7 @@ class _EventFeedState extends State<EventFeed> {
         query: widget.query,
         itemBuilder: (context, DataSnapshot snap, Animation<double> animation) {
           MyEvent event = new MyEvent(
+              key: snap.key,
               title: snap.value['title'],
               description: snap.value['description'],
               location: snap.value['location'],
@@ -58,12 +62,15 @@ class _EventFeedState extends State<EventFeed> {
               endTime: snap.value['endTime'],
               image: snap.value['image'],
               foodType: snap.value['foodType'],
-              isFlagged: false
+              latitude: snap.value['geolocation']['latitude'],
+              longitude: snap.value['geolocation']['longitude'],
+              isFlagged: isFlagged(snap.value['flags'], widget.user)
           );
 
 
           return new EventCard(
             event: event,
+            user: widget.user,
             height: 366.0,
           );
         }
@@ -102,6 +109,12 @@ class _EventFeedState extends State<EventFeed> {
 
 
     );
+  }
+
+  isFlagged(Map flags, GoogleSignInAccount user) {
+    if(flags != null) {
+      return flags.containsKey(user.id);
+    }else return false;
   }
 
 
@@ -151,6 +164,7 @@ class DateDivider extends StatelessWidget {
 
 class MyEvent {
   const MyEvent({
+    @required this.key,
     @required this.title,
     @required this.description,
     @required this.location,
@@ -160,7 +174,10 @@ class MyEvent {
     @required this.endTime,
     @required this.image,
     @required this.foodType,
-    @required this.isFlagged
+    @required this.isFlagged,
+    @required this.latitude,
+    @required this.longitude
+
   })
       : assert(title != null),
         assert(description != null),
@@ -173,6 +190,7 @@ class MyEvent {
         assert(isFlagged != null),
         assert(foodType != null);
 
+  final String key;
   final String title;
   final String description;
   final String organization;
@@ -183,6 +201,8 @@ class MyEvent {
   final String startTime;
   final String endTime;
   final bool isFlagged;
+  final String latitude;
+  final String longitude;
 
   String getDateString() {
     DateTime d = this.date;
@@ -217,11 +237,13 @@ class MyEvent {
 class EventCard extends StatelessWidget {
   const EventCard({
     @required this.event,
-    @required this.height
+    @required this.height,
+    @required this.user
   });
 
   final MyEvent event;
   final double height;
+  final GoogleSignInAccount user;
 
 
   @override
@@ -315,7 +337,7 @@ class EventCard extends StatelessWidget {
                       onPressed: () {
                         Navigator.of(context).push(new MaterialPageRoute(
                             builder: (BuildContext build) {
-                              return new EventInfoPage(event: event,);
+                              return new EventInfoPage(event: event, user: user);
                             }
                         )
                         );

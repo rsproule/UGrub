@@ -33,7 +33,7 @@ class _ProfilePageState extends State<ProfilePage> {
         onTap: (){
           Navigator.of(context).push(new MaterialPageRoute(
               builder: (BuildContext build) {
-                return new GroupFeed();
+                return new GroupFeed(user: widget.user,);
               }
           ));
         },

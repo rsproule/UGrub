@@ -1,15 +1,25 @@
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'events.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class FoodTile extends StatelessWidget {
-  const FoodTile({this.image, this.name, this.events, this.query, this.count});
+  const FoodTile({
+    this.image,
+    this.name,
+    this.events,
+    this.query,
+    this.count,
+    @required this.user
+  });
 
   final Widget image;
   final String name;
   final int count;
   final List<MyEvent> events;
   final DatabaseReference query;
+  final GoogleSignInAccount user;
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +58,7 @@ class FoodTile extends StatelessWidget {
               .of(context)
               .push(new MaterialPageRoute(builder: (BuildContext build) {
             return new EventFeed(
+              user: user,
               query: query,
               hasAppBar: true,
               title: name,

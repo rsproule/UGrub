@@ -1,22 +1,26 @@
 import 'dart:math';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'groups.dart';
 import 'event_info.dart';
 import 'events.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'user.dart';
 
 
 class GroupInfoPage extends StatefulWidget {
   const GroupInfoPage({
     Key key,
-    @required this.group
+    @required this.group,
+    @required this.user
   })
       : assert(group != null),
         super(key: key);
 
   final GroupItem group;
+  final GoogleSignInAccount user;
 
   @override
   _GroupInfoPageState createState() => new _GroupInfoPageState();
@@ -28,7 +32,8 @@ class _GroupInfoPageState extends State<GroupInfoPage> {
   Widget _builder(BuildContext context) {
     List<Widget> _eventTiles = [];
     for (MyEvent ev in widget.group.events) {
-      _eventTiles.add(new GridItem(event: ev, type: GridItemType.none,));
+      _eventTiles.add(
+          new GridItem(event: ev, type: GridItemType.none, user: widget.user,));
     }
 
 
@@ -128,9 +133,11 @@ class GridItem extends StatefulWidget {
     this.score,
     this.daysTill,
     this.distance,
+    @required this.user,
     @required this.type
   });
 
+  final GoogleSignInAccount user;
   final MyEvent event;
   final int score;
   final int daysTill;
@@ -147,23 +154,88 @@ class _GridItemState extends State<GridItem> {
   @override
   initState() {
     super.initState();
-    isFlag = widget.event.isFlagged;
+    setState(() {
+      isFlag = widget.event.isFlagged;
+    });
   }
 
 
-  void onBannerTap() {
-    setState(() {
-      isFlag = !isFlag;
-    });
+  onBannerTap() async {
+    //TODO check with the db to see if it actually is flagged or not
 
-    String actionName = isFlag ? " added to" : " removed from";
-    Scaffold.of(context).showSnackBar(new SnackBar(
-      content: new Text(widget.event.title + actionName + " flagged events."),
-      backgroundColor: Theme
-          .of(context)
-          .brightness == Brightness.dark ? Colors.grey : Colors.black54,
-    )
-    );
+    DatabaseReference flaggedEvents = FirebaseDatabase.instance.reference()
+        .child("users").child(widget.user.id).child("flags");
+    DataSnapshot snap = await flaggedEvents.once();
+    Map m = snap.value;
+    bool actuallyIsFlagged = m.containsKey(widget.event.key);
+
+
+    if (!actuallyIsFlagged) {
+      setState((){
+        isFlag = true;
+      });
+      addEventToFlags(widget.event, widget.user).then((bool success) {
+        if (success) {
+          String actionName = " added";
+          Scaffold.of(context).showSnackBar(new SnackBar(
+            content: new Text(
+                widget.event.title + actionName + " flagged events."),
+            backgroundColor: Theme
+                .of(context)
+                .brightness == Brightness.dark ? Colors.grey : Colors.black54,
+          ));
+
+          setState((){
+            isFlag = true;
+          });
+        }else{
+          setState((){
+            isFlag = false;
+          });
+        }
+      });
+    }
+    else {
+      showDialog(
+          context: context,
+          child: new AlertDialog(
+            title: new Text(
+                "Are you sure you want to unflag " + widget.event.title + "?"),
+            actions: <Widget> [
+              new FlatButton(
+                  onPressed: (){
+                    Navigator.of(context).pop();
+                    setState((){
+                      isFlag = true;
+                    });
+                  },
+                  child: new Text("CANCEL")
+              ),
+              new FlatButton(
+                  onPressed: (){
+                    removeEventFromFlags(widget.event, widget.user).then((bool success){
+                      Scaffold.of(context).showSnackBar(new SnackBar(
+                        content: new Text(
+                            widget.event.title + " removed from flagged events."),
+                        backgroundColor: Theme
+                            .of(context)
+                            .brightness == Brightness.dark ? Colors.grey : Colors.black54,
+                      ));
+                      setState((){
+                        isFlag = false;
+                      });
+                      Navigator.of(context).pop();
+                    });
+
+                  },
+                  child: new Text("UNFLAG", style: new TextStyle(color: Colors.red),)
+              )
+            ],
+
+          ));
+    }
+
+
   }
 
   @override
@@ -176,7 +248,7 @@ class _GridItemState extends State<GridItem> {
         onTap: () {
           Navigator.of(context).push(new MaterialPageRoute(
               builder: (BuildContext build) {
-                return new EventInfoPage(event: event);
+                return new EventInfoPage(event: event, user: widget.user,);
               }
           )
           );
@@ -201,41 +273,40 @@ class _GridItemState extends State<GridItem> {
 
     _buildLeadingWidget(String val, IconData icon) {
       return new Row(
-          children: <Widget>[
-        new Expanded(child: new Container()),
-            new Container(
-              color: Colors.black45,
-              padding: const EdgeInsets.all(4.0),
-              child: new Row(
-                  children: <Widget>[
-                    new Container(padding: const EdgeInsets.only(right: 5.0),
-                        child: new Icon(icon)
-                    ),
-                    new Text(val, style: Theme
-                        .of(context)
-                        .textTheme
-                        .subhead
-                        .copyWith(color: Colors.white),),
+        children: <Widget>[
+          new Expanded(child: new Container()),
+          new Container(
+            color: Colors.black45,
+            padding: const EdgeInsets.all(4.0),
+            child: new Row(
+                children: <Widget>[
+                  new Container(padding: const EdgeInsets.only(right: 5.0),
+                      child: new Icon(icon)
+                  ),
+                  new Text(val, style: Theme
+                      .of(context)
+                      .textTheme
+                      .subhead
+                      .copyWith(color: Colors.white),),
 
-                  ]),
-            ),
+                ]),
+          ),
 
-          ],
+        ],
 
       );
     }
 
 
-
     Widget header;
-    switch(widget.type){
+    switch (widget.type) {
       case GridItemType.popular:
         header = _buildLeadingWidget(widget.score.toString(), Icons.whatshot);
         break;
       case GridItemType.upcoming:
         String s = widget.daysTill == 1 ? "" : "s";
-        String msg = widget.daysTill.toString() + " day" +s +" till";
-        if(widget.daysTill == 0){
+        String msg = widget.daysTill.toString() + " day" + s + " till";
+        if (widget.daysTill == 0) {
           msg = "Today";
         }
         header = _buildLeadingWidget(msg, Icons.today);

@@ -88,7 +88,7 @@ class _MainFeedState extends State<MainFeed> with TickerProviderStateMixin {
 
     //all events query
     DatabaseReference query = FirebaseDatabase.instance.reference().child(
-        'events');
+        'users').child(widget.user.id).child("flags");
 
 
     List<Widget> _views = [
@@ -98,7 +98,7 @@ class _MainFeedState extends State<MainFeed> with TickerProviderStateMixin {
 //        ),
 
       new HomePageFeed(user: widget.user, showDrawer: widget.showDrawer, drawer: widget.drawer, currentLocation : widget.currentLocation),
-      new EventFeed(query: query, showDrawer: widget.showDrawer, hasAppBar: true, title: "Saved Events",),
+      new EventFeed(user: widget.user, query: query, showDrawer: widget.showDrawer, hasAppBar: true, title: "Flagged Events",),
       new NotificationsPage(showDrawer: widget.showDrawer, user: widget.user),
       new ProfilePage(showDrawer: widget.showDrawer, user: widget.user,)
     ];

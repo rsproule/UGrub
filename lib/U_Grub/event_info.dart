@@ -1,40 +1,91 @@
+import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'events.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class EventInfoPage extends StatefulWidget {
   const EventInfoPage({
     Key key,
-    this.event
+    this.event,
+    @required this.user
   }) : super(key: key);
 
   final MyEvent event;
+  final GoogleSignInAccount user;
 
   @override
   _EventInfoPageState createState() => new _EventInfoPageState();
 }
 
 class _EventInfoPageState extends State<EventInfoPage> {
+  bool isFlagged;
 
   Widget _bodyBuilder(BuildContext context) {
     MyEvent event = widget.event;
+    isFlagged = widget.event.isFlagged;
+    String flagCall = !isFlagged ? "Flag this Event" : "Unflag this Event";
     return new CustomScrollView(
       slivers: <Widget>[
         new SliverAppBar(
 
           actions: <Widget>[
             new PopupMenuButton(
-                onSelected: (String selected) {
-                  _showScaffold(
-                      context, 'You pressed snackbar $selected\'s action.');
+                onSelected: (String selected) async {
+                  if (selected == "Flag this Event") {
+                    DatabaseReference flaggedEvents = FirebaseDatabase.instance
+                        .reference()
+                        .child("users").child(widget.user.id).child("flags");
+                    DataSnapshot snap = await flaggedEvents.once();
+                    Map m = snap.value;
+                    bool actuallyIsFlagged = m.containsKey(widget.event.key);
+
+                    //TODO check if the event is already flagged
+                    if (!actuallyIsFlagged) {
+                      addEventToFlags(event, widget.user).then((bool success) {
+                        _showScaffold(
+                            context,
+                            'You flagged this event.'
+                        );
+                        setState(() {
+                          isFlagged = true;
+                        });
+                      });
+                    }else{
+                      setState((){
+                        isFlagged = actuallyIsFlagged;
+                      });
+                    }
+                  }
+                  if(selected == "Unflag this Event") {
+                    DatabaseReference flaggedEvents = FirebaseDatabase.instance
+                        .reference()
+                        .child("users").child(widget.user.id).child("flags");
+                    DataSnapshot snap = await flaggedEvents.once();
+                    Map m = snap.value;
+                    bool actuallyIsFlagged = m.containsKey(widget.event.key);
+                    if (actuallyIsFlagged) {
+                      removeEventFromFlags(event, widget.user).then((
+                          bool success) {
+                        _showScaffold(context, "You unflagged this event.");
+                        setState(() {
+                          isFlagged = false;
+                        });
+                      });
+                    }else{
+                      setState((){
+                        isFlagged = actuallyIsFlagged;
+                      });
+                    }
+                  }
                 },
                 itemBuilder: (BuildContext context) =>
                 <PopupMenuItem<String>>[
                   _buildMenuItem(Icons.map, "View in Map"),
                   _buildMenuItem(Icons.calendar_today, "Open in calendar"),
                   _buildMenuItem(Icons.share, "Share"),
-                  _buildMenuItem(Icons.flag, "Flag this Event")
+                  _buildMenuItem(Icons.flag, flagCall)
                 ]
             )
           ],
@@ -84,7 +135,9 @@ class _EventInfoPageState extends State<EventInfoPage> {
                 endsOn: event.endTime,
               ),
               new Divider(),
-              new Location(location: event.location)
+              new Location(location: event.location,
+                latitude: event.latitude,
+                longitude: event.longitude,)
 
 
             ])
@@ -129,17 +182,92 @@ class _EventInfoPageState extends State<EventInfoPage> {
         content: new Text(s)
     ));
   }
+
+
+}
+Future<bool> addEventToFlags(MyEvent event, GoogleSignInAccount user) async {
+  DatabaseReference currEventRef = FirebaseDatabase.instance.reference()
+      .child('events')
+      .child(event.key);
+  DatabaseReference popEventRef = FirebaseDatabase.instance.reference().child(
+      "popular").child(event.key);
+
+
+  //TODO post to the current users flagged
+  DatabaseReference usersFlags = FirebaseDatabase.instance.reference()
+      .child("users").child(user.id).child("flags");
+
+  //copy the event data snapshot to the users flagged
+  currEventRef.once().then((DataSnapshot snap) async {
+    await usersFlags.child(event.key).set(snap.value).catchError((error) {
+      return false;
+    });
+  });
+
+
+  //TODO post to the events flagged
+
+  await currEventRef.child("flags").child(user.id).set({
+    'name': user.displayName,
+    'image': user.photoUrl
+  }).catchError((error){
+    return false;
+  });
+
+  await popEventRef.child("flags").child(user.id).set({
+    'name': user.displayName,
+    'image': user.photoUrl
+  }).catchError((error){
+    return false;
+  });
+
+  return true;
+}
+
+Future<bool> removeEventFromFlags(MyEvent event, GoogleSignInAccount user) async {
+  DatabaseReference currEventRef = FirebaseDatabase.instance.reference()
+      .child('events')
+      .child(event.key);
+  DatabaseReference popEventRef = FirebaseDatabase.instance.reference().child(
+      "popular").child(event.key);
+
+
+  //TODO post to the current users flagged
+  DatabaseReference usersFlags = FirebaseDatabase.instance.reference()
+      .child("users").child(user.id).child("flags");
+
+  //copy the event data snapshot to the users flagged
+  currEventRef.once().then((DataSnapshot snap) async {
+    await usersFlags.child(event.key).remove().catchError((error) {
+      return false;
+    });
+  });
+
+
+  //TODO post to the events flagged
+
+  await currEventRef.child("flags").child(user.id).remove().catchError((error){
+    return false;
+  });
+
+  await popEventRef.child("flags").child(user.id).remove().catchError((error){
+    return false;
+  });
+
+  return true;
 }
 
 class About extends StatelessWidget {
   final String description;
   final String organization;
   final foodType;
+  final GoogleSignInAccount user;
 
   const About({
     this.description,
     this.organization,
-    this.foodType
+    this.foodType,
+    this.user
   });
 
 
@@ -175,31 +303,37 @@ class About extends StatelessWidget {
       foodType.toString().replaceAll('[', "").replaceAll("]", ""),
       style: descriptionStyle,);
     if (foodType is String) {
-      food = new CategoryTag(category: foodType.toString().replaceAll('[', ""),
-        style: descriptionStyle, color: color);
+      food = new CategoryTag(
+          user: user,
+          category: foodType.toString().replaceAll('[', ""),
+          style: descriptionStyle, color: Theme
+          .of(context)
+          .accentColor);
     }
     else if (foodType is List) {
       List<Widget> _categories = [];
       for (String f in foodType) {
         Widget cat = new CategoryTag(
+            user: user,
             category: f.replaceAll("[", "").replaceAll(",", "").replaceAll(
-                "]", ""), style: descriptionStyle, color : color);
+                "]", ""), style: descriptionStyle, color: Theme
+            .of(context)
+            .accentColor);
         _categories.add(cat);
       }
       List<Widget> formatted = [];
       int i = 0;
-      while(i < _categories.length){
-        Widget tempRow =  new Row(
-          children: _categories.sublist(i, i+2),
+      while (i < _categories.length) {
+        Widget tempRow = new Row(
+          children: _categories.sublist(i, i + 2),
         );
 
         formatted.add(tempRow);
-        i+=2;
-
+        i += 2;
       }
 
       food = new Column(
-        children: formatted
+          children: formatted
       );
     }
 
@@ -238,9 +372,11 @@ class CategoryTag extends StatelessWidget {
   const CategoryTag({
     this.category,
     this.style,
-    this.color
+    this.color,
+    @required this.user
   });
 
+  final GoogleSignInAccount user;
   final Color color;
   final TextStyle style;
   final String category;
@@ -248,30 +384,33 @@ class CategoryTag extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return new Container(
-        padding: const EdgeInsets.all(10.0),
-        margin: const EdgeInsets.all(4.0),
-        decoration: new BoxDecoration(
-            borderRadius: const BorderRadius.all(
-                const Radius.elliptical(30.0, 30.0)),
-            color: color
-        ),
-        child: new InkWell(
-              splashColor: Colors.black45,
-              highlightColor: Colors.black12,
-              onTap: () {
-                DatabaseReference query = FirebaseDatabase.instance.reference()
-                    .child("categories")
-                    .child(category);
-                Navigator.of(context).push(new MaterialPageRoute(
-                    builder: (BuildContext build) {
-                      return new EventFeed(
-                        query: query, hasAppBar: true, title: category,);
-                    }
-                )
-                );
-              },
-              child: new Text(category, style: style,)
-        ),
+      padding: const EdgeInsets.all(10.0),
+      margin: const EdgeInsets.all(4.0),
+      decoration: new BoxDecoration(
+          borderRadius: const BorderRadius.all(
+              const Radius.elliptical(30.0, 30.0)),
+          color: color
+      ),
+      child: new InkWell(
+//              splashColor: Colors.black45,
+//              highlightColor: Colors.black12,
+          onTap: () {
+            DatabaseReference query = FirebaseDatabase.instance.reference()
+                .child("categories")
+                .child(category);
+            Navigator.of(context).push(new MaterialPageRoute(
+                builder: (BuildContext build) {
+                  return new EventFeed(
+                    query: query,
+                    hasAppBar: true,
+                    title: category,
+                    user: user,);
+                }
+            )
+            );
+          },
+          child: new Text(category, style: style,)
+      ),
 
     );
   }
@@ -340,13 +479,15 @@ class Location extends StatelessWidget {
   const Location({
     Key key,
     @required this.location,
-    this.geolocation
+    @required this.latitude,
+    @required this.longitude
   })
       : assert(location != null),
         super(key: key);
 
   final String location;
-  final geolocation;
+  final String latitude;
+  final String longitude;
 
   @override
   Widget build(BuildContext context) {
@@ -384,7 +525,9 @@ class Location extends StatelessWidget {
       new Divider(color: Colors.transparent, height: 6.0,),
       loc,
       new Divider(color: Colors.transparent, height: 16.0,),
-      new Image.network("http://52.14.73.202/~rsproule/misc/mapimg.png")
+
+      new Image.network(
+          "https://maps.googleapis.com/maps/api/staticmap?center=${latitude},${longitude}&zoom=18&size=640x400&key=AIzaSyBEzlKe0AUBUVSINPeIniLv0PcEPACprPQ")
 
     ];
 

@@ -7,15 +7,18 @@ import 'package:flutter/material.dart';
 import 'group_info.dart';
 import 'events.dart';
 import 'group_landing_page.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'user.dart';
 
 
 class GroupFeed extends StatefulWidget {
   const GroupFeed({
     Key key,
+    @required this.user
 
   }) : super(key: key);
 
+  final GoogleSignInAccount user;
   @override
   _GroupFeedState createState() => new _GroupFeedState();
 }
@@ -62,6 +65,7 @@ class FirebaseGroupDecoder extends Converter<DataSnapshot, GroupItem> {
       ev.forEach((k, v) {
         _events.add(
             new MyEvent(
+                key: k,
                 title: v['title'],
                 description: v['description'],
                 location: v['location'],
@@ -71,6 +75,8 @@ class FirebaseGroupDecoder extends Converter<DataSnapshot, GroupItem> {
                 endTime: v['endTime'],
                 image: v['image'],
                 foodType: v['foodType'],
+                latitude: v['geolocation']['latitude'],
+                longitude: v['geolocation']['longitude'],
                 isFlagged: false
             )
         );
@@ -158,7 +164,7 @@ class _GroupFeedState extends State<GroupFeed> {
                 /*open the group landing page*/
                 Navigator.of(context).push(new MaterialPageRoute(
                     builder: (BuildContext build) {
-                      return new GroupLandingPage(group: item);
+                      return new GroupLandingPage(group: item, user: widget.user,);
                     }
                 ));
               },
@@ -166,7 +172,7 @@ class _GroupFeedState extends State<GroupFeed> {
                 /* open the group info page */
                 Navigator.of(context).push(new MaterialPageRoute(
                     builder: (BuildContext build) {
-                      return new GroupInfoPage(group: item);
+                      return new GroupInfoPage(group: item, user: widget.user,);
                     }
                 ));
               },

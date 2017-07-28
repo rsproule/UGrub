@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_database/ui/firebase_animated_list.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -13,7 +14,7 @@ import 'package:u_grub2/U_Grub/search.dart';
 
 class HomePageFeed extends StatefulWidget {
   const HomePageFeed(
-      {Key key, this.showDrawer, this.user, this.currentLocation, this.drawer})
+      {Key key, this.showDrawer, @required this.user, this.currentLocation, this.drawer})
       : super(key: key);
 
   final showDrawer;
@@ -40,11 +41,11 @@ class _HomePageFeedState extends State<HomePageFeed> {
 
   buildAppBar() {
     TextStyle fontStyle = Theme.of(context).brightness == Brightness.light
-        ? Theme.of(context).textTheme.title.copyWith(
+        ? Theme.of(context).textTheme.subhead.copyWith(
             fontFamily: "Raleway",
             textBaseline: TextBaseline.alphabetic,
             color: Colors.black54)
-        : Theme.of(context).textTheme.title;
+        : Theme.of(context).textTheme.subhead;
 
     Widget appBar = new Card(
       child: new ListTile(
@@ -98,6 +99,7 @@ class _HomePageFeedState extends State<HomePageFeed> {
 
     b.forEach((k, snap) {
       MyEvent event = new MyEvent(
+        key: k,
         title: snap['title'],
         description: snap['description'],
         location: snap['location'],
@@ -107,7 +109,10 @@ class _HomePageFeedState extends State<HomePageFeed> {
         endTime: snap['endTime'],
         image: snap['image'],
         foodType: snap['foodType'],
-        isFlagged: false,
+        latitude: snap['geolocation']['latitude'],
+        longitude: snap['geolocation']['longitude'],
+
+        isFlagged: isFlagged(snap['flags'], widget.user),
       );
       int score;
       if (isPopular) {
@@ -122,6 +127,7 @@ class _HomePageFeedState extends State<HomePageFeed> {
       }
 
       EventInSideScrollItem item = new EventInSideScrollItem(
+        user: widget.user,
         event: event,
         score: isPopular ? score : null,
         daysTill: event.date.difference(new DateTime.now()).inDays,
@@ -218,6 +224,7 @@ class _HomePageFeedState extends State<HomePageFeed> {
       String initials = name.substring(0, 1);
 
       FoodTile _cat = new FoodTile(
+        user: widget.user,
         name: name,
         image: new Container(
           color: randColor.withOpacity(.4),
@@ -225,7 +232,7 @@ class _HomePageFeedState extends State<HomePageFeed> {
           height: 50.0,
           child: new CircleAvatar(
               child: new Text(
-                name.substring(0, 1),
+                initials,
                 style: descriptionStyle,
               ),
               backgroundColor: randColor),
@@ -271,13 +278,7 @@ class _HomePageFeedState extends State<HomePageFeed> {
 
   @override
   Widget build(BuildContext context) {
-    TextStyle descriptionStyle =
-        Theme.of(context).brightness == Brightness.light
-            ? Theme.of(context).textTheme.subhead.copyWith(
-                fontFamily: "Raleway",
-                textBaseline: TextBaseline.alphabetic,
-                color: Colors.black54)
-            : Theme.of(context).textTheme.subhead;
+
     final double systemTopPadding = MediaQuery.of(context).padding.top;
 
     Widget dynamicAppBar = new SliverAppBar(
@@ -338,14 +339,27 @@ class _HomePageFeedState extends State<HomePageFeed> {
           return new FadeTransition(opacity: animation, child: child);
         }));
   }
+
+  isFlagged(Map flags, GoogleSignInAccount user) {
+    if(flags != null) {
+      return flags.containsKey(user.id);
+    }else return false;
+  }
 }
 
 class EventInSideScrollItem extends StatelessWidget {
-  const EventInSideScrollItem(
-      {this.event, this.score, this.daysTill, this.type, this.distance});
+  const EventInSideScrollItem({
+    this.event,
+    this.score,
+    this.daysTill,
+    this.type,
+    this.distance,
+    @required this.user
+  });
 
   final MyEvent event;
   final int score;
+  final GoogleSignInAccount user;
   final int daysTill;
   final int distance;
   final GridItemType type;
@@ -356,6 +370,7 @@ class EventInSideScrollItem extends StatelessWidget {
         padding: const EdgeInsets.all(15.0),
         width: 200.0,
         child: new GridItem(
+          user: user,
           event: event,
           score: score,
           daysTill: daysTill,
