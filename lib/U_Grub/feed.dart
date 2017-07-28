@@ -73,7 +73,7 @@ class _MainFeedState extends State<MainFeed> with TickerProviderStateMixin {
           new BottomNavigationBarItem(
               icon: new Icon(Icons.home), title: _index == 0 ? new Text("Home") : new Text("")),
           new BottomNavigationBarItem(
-              icon: new Icon(Icons.event), title: _index == 1 ? new Text("Saved") : new Text("")),
+              icon: new Icon(Icons.flag), title: _index == 1 ? new Text("Flagged") : new Text("")),
           new BottomNavigationBarItem(
               icon: new Icon(Icons.notifications), title: _index == 2 ? new Text("Notifications") : new Text("")),
           new BottomNavigationBarItem(

@@ -41,7 +41,7 @@ class _EventInfoPageState extends State<EventInfoPage> {
                     Map m = snap.value;
                     bool actuallyIsFlagged = m.containsKey(widget.event.key);
 
-                    //TODO check if the event is already flagged
+                    //TODO Fix all of this garbage code i threw together before vaca
                     if (!actuallyIsFlagged) {
                       addEventToFlags(event, widget.user).then((bool success) {
                         _showScaffold(
@@ -59,11 +59,15 @@ class _EventInfoPageState extends State<EventInfoPage> {
                     }
                   }
                   if(selected == "Unflag this Event") {
+
+                    ///THIS CODE IS A PROBLEM I THINK---------------------------
                     DatabaseReference flaggedEvents = FirebaseDatabase.instance
                         .reference()
                         .child("users").child(widget.user.id).child("flags");
                     DataSnapshot snap = await flaggedEvents.once();
                     Map m = snap.value;
+                    /// --------------------------------------------------------
+
                     bool actuallyIsFlagged = m.containsKey(widget.event.key);
                     if (actuallyIsFlagged) {
                       removeEventFromFlags(event, widget.user).then((
@@ -123,6 +127,7 @@ class _EventInfoPageState extends State<EventInfoPage> {
             delegate: new SliverChildListDelegate(<Widget>[
 
               new About(
+                user: widget.user,
                 description: event.description,
                 foodType: event.foodType,
                 organization: event.organization,
@@ -199,7 +204,7 @@ Future<bool> addEventToFlags(MyEvent event, GoogleSignInAccount user) async {
 
   //copy the event data snapshot to the users flagged
   currEventRef.once().then((DataSnapshot snap) async {
-    await usersFlags.child(event.key).set(snap.value).catchError((error) {
+    usersFlags.child(event.key).set(snap.value).catchError((error) {
       return false;
     });
   });
@@ -207,14 +212,14 @@ Future<bool> addEventToFlags(MyEvent event, GoogleSignInAccount user) async {
 
   //TODO post to the events flagged
 
-  await currEventRef.child("flags").child(user.id).set({
+  currEventRef.child("flags").child(user.id).set({
     'name': user.displayName,
     'image': user.photoUrl
   }).catchError((error){
     return false;
   });
 
-  await popEventRef.child("flags").child(user.id).set({
+  popEventRef.child("flags").child(user.id).set({
     'name': user.displayName,
     'image': user.photoUrl
   }).catchError((error){
@@ -267,7 +272,7 @@ class About extends StatelessWidget {
     this.description,
     this.organization,
     this.foodType,
-    this.user
+    @required this.user
   });
 
 

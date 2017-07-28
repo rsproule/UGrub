@@ -17,7 +17,8 @@ class EventFeed extends StatefulWidget {
     @required this.user
 
 
-  }) : super(key: key);
+  }) : assert(user != null),
+        super(key: key);
 
   final String title;
   final bool hasAppBar;
@@ -257,10 +258,12 @@ class EventCard extends StatelessWidget {
         .textTheme
         .subhead;
 
+
     Widget card = new Container(
       padding: const EdgeInsets.all(16.0),
       height: height,
       child: new Card(
+
         child: new Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
@@ -324,7 +327,7 @@ class EventCard extends StatelessWidget {
                   children: <Widget>[
                     new PopupMenuButton(
 
-                        child: new Text("SHARE", style: Theme.of(context).textTheme.button.copyWith(color: Colors.amber.shade500),),
+                        child: new Text("SHARE", style: Theme.of(context).textTheme.button.copyWith(color: Theme.of(context).accentColor),),
                         itemBuilder: (BuildContext context) =>
                         <PopupMenuItem<String>>[
                           buildMenuItem(context, Icons.replay, "Repost"),
@@ -333,7 +336,7 @@ class EventCard extends StatelessWidget {
                     ),
                     new FlatButton(
                       child: const Text('MORE INFO'),
-                      textColor: Colors.amber.shade500,
+                      textColor: Theme.of(context).accentColor,
                       onPressed: () {
                         Navigator.of(context).push(new MaterialPageRoute(
                             builder: (BuildContext build) {

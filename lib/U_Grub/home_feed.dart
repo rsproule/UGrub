@@ -278,7 +278,6 @@ class _HomePageFeedState extends State<HomePageFeed> {
 
   @override
   Widget build(BuildContext context) {
-
     final double systemTopPadding = MediaQuery.of(context).padding.top;
 
     Widget dynamicAppBar = new SliverAppBar(
@@ -289,8 +288,7 @@ class _HomePageFeedState extends State<HomePageFeed> {
               new EdgeInsets.only(top: systemTopPadding, left: 5.0, right: 5.0),
           child: buildAppBar()),
       backgroundColor: Colors.transparent,
-      snap: false,
-      floating: true,
+      pinned: true,
     );
     final Orientation orientation = MediaQuery.of(context).orientation;
 

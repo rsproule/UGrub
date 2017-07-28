@@ -162,16 +162,14 @@ class _GridItemState extends State<GridItem> {
 
   onBannerTap() async {
     //TODO check with the db to see if it actually is flagged or not
-
     DatabaseReference flaggedEvents = FirebaseDatabase.instance.reference()
         .child("users").child(widget.user.id).child("flags");
     DataSnapshot snap = await flaggedEvents.once();
     Map m = snap.value;
     bool actuallyIsFlagged = m.containsKey(widget.event.key);
 
-
     if (!actuallyIsFlagged) {
-      setState((){
+      setState(() {
         isFlag = true;
       });
       addEventToFlags(widget.event, widget.user).then((bool success) {
@@ -185,15 +183,16 @@ class _GridItemState extends State<GridItem> {
                 .brightness == Brightness.dark ? Colors.grey : Colors.black54,
           ));
 
-          setState((){
+          setState(() {
             isFlag = true;
           });
-        }else{
-          setState((){
+        } else {
+          setState(() {
             isFlag = false;
           });
         }
       });
+
     }
     else {
       showDialog(
@@ -201,41 +200,44 @@ class _GridItemState extends State<GridItem> {
           child: new AlertDialog(
             title: new Text(
                 "Are you sure you want to unflag " + widget.event.title + "?"),
-            actions: <Widget> [
+            actions: <Widget>[
               new FlatButton(
-                  onPressed: (){
+                  onPressed: () {
                     Navigator.of(context).pop();
-                    setState((){
+                    setState(() {
                       isFlag = true;
                     });
                   },
                   child: new Text("CANCEL")
               ),
               new FlatButton(
-                  onPressed: (){
-                    removeEventFromFlags(widget.event, widget.user).then((bool success){
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    removeEventFromFlags(widget.event, widget.user).then((
+                        bool success) {
                       Scaffold.of(context).showSnackBar(new SnackBar(
                         content: new Text(
-                            widget.event.title + " removed from flagged events."),
+                            widget.event.title +
+                                " removed from flagged events."),
                         backgroundColor: Theme
                             .of(context)
-                            .brightness == Brightness.dark ? Colors.grey : Colors.black54,
+                            .brightness == Brightness.dark
+                            ? Colors.grey
+                            : Colors.black54,
                       ));
-                      setState((){
+                      setState(() {
                         isFlag = false;
                       });
-                      Navigator.of(context).pop();
-                    });
 
+                    });
                   },
-                  child: new Text("UNFLAG", style: new TextStyle(color: Colors.red),)
+                  child: new Text(
+                    "UNFLAG", style: new TextStyle(color: Colors.red),)
               )
             ],
 
           ));
     }
-
-
   }
 
   @override

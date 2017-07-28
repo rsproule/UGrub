@@ -1,7 +1,9 @@
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'login.dart';
+import 'package:u_grub2/U_Grub/events.dart';
 import 'package:u_grub2/U_Grub/groups.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -9,7 +11,7 @@ class ProfilePage extends StatefulWidget {
     Key key,
     this.showDrawer,
     @required this.user
-  }) : super(key : key);
+  }) : super(key: key);
 
   final GoogleSignInAccount user;
   final showDrawer;
@@ -21,16 +23,14 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
 
 
-
   @override
   Widget build(BuildContext context) {
-
     List<Widget> _tiles = [
       new ListTile(
         title: new Text("Groups"),
         trailing: new Icon(Icons.keyboard_arrow_right),
         leading: new Icon(Icons.group),
-        onTap: (){
+        onTap: () {
           Navigator.of(context).push(new MaterialPageRoute(
               builder: (BuildContext build) {
                 return new GroupFeed(user: widget.user,);
@@ -44,8 +44,19 @@ class _ProfilePageState extends State<ProfilePage> {
         title: new Text("Saved"),
         trailing: new Icon(Icons.keyboard_arrow_right),
         leading: new Icon(Icons.bookmark),
-        onTap: (){
-
+        onTap: () {
+          DatabaseReference query = FirebaseDatabase.instance
+              .reference()
+              .child("users")
+              .child(widget.user.id).child("flags");
+          Navigator
+              .of(context)
+              .push(new MaterialPageRoute(
+              builder: (BuildContext build) {
+                return new EventFeed(
+                  user: widget.user, title: "Saved Events", query:query, hasAppBar: true,);
+              }
+          ));
         },
 
       ),
@@ -63,7 +74,7 @@ class _ProfilePageState extends State<ProfilePage> {
         title: new Text(widget.user.displayName),
       ),
       body: new ListView(
-        children: _tiles
+          children: _tiles
       ),
 
     );
