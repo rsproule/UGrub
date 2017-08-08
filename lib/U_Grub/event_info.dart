@@ -20,12 +20,22 @@ class EventInfoPage extends StatefulWidget {
 }
 
 class _EventInfoPageState extends State<EventInfoPage> {
+
   bool isFlagged;
 
   Widget _bodyBuilder(BuildContext context) {
+    final double screenWidth = MediaQuery
+        .of(context)
+        .size
+        .width;
+
+
     MyEvent event = widget.event;
     isFlagged = widget.event.isFlagged;
     String flagCall = !isFlagged ? "Flag this Event" : "Unflag this Event";
+
+    bool hasGeoLocation = widget.event.latitude != null &&
+        widget.event.longitude != null;
     return new CustomScrollView(
       slivers: <Widget>[
         new SliverAppBar(
@@ -52,13 +62,13 @@ class _EventInfoPageState extends State<EventInfoPage> {
                           isFlagged = true;
                         });
                       });
-                    }else{
-                      setState((){
+                    } else {
+                      setState(() {
                         isFlagged = actuallyIsFlagged;
                       });
                     }
                   }
-                  if(selected == "Unflag this Event") {
+                  if (selected == "Unflag this Event") {
 
                     ///THIS CODE IS A PROBLEM I THINK---------------------------
                     DatabaseReference flaggedEvents = FirebaseDatabase.instance
@@ -66,6 +76,7 @@ class _EventInfoPageState extends State<EventInfoPage> {
                         .child("users").child(widget.user.id).child("flags");
                     DataSnapshot snap = await flaggedEvents.once();
                     Map m = snap.value;
+
                     /// --------------------------------------------------------
 
                     bool actuallyIsFlagged = m.containsKey(widget.event.key);
@@ -77,8 +88,8 @@ class _EventInfoPageState extends State<EventInfoPage> {
                           isFlagged = false;
                         });
                       });
-                    }else{
-                      setState((){
+                    } else {
+                      setState(() {
                         isFlagged = actuallyIsFlagged;
                       });
                     }
@@ -96,7 +107,11 @@ class _EventInfoPageState extends State<EventInfoPage> {
           expandedHeight: 256.0,
           pinned: true,
           flexibleSpace: new FlexibleSpaceBar(
-            title: new Text(event.title),
+            title: new Container(
+                width: screenWidth,
+                color: Colors.black12,
+                margin: const EdgeInsets.only(right: 100.0, left: 100.0),
+                child: new Text(event.title)),
             background: new Stack(
               fit: StackFit.expand,
               children: <Widget>[
@@ -140,9 +155,12 @@ class _EventInfoPageState extends State<EventInfoPage> {
                 endsOn: event.endTime,
               ),
               new Divider(),
+              hasGeoLocation ?
               new Location(location: event.location,
                 latitude: event.latitude,
-                longitude: event.longitude,)
+                longitude: event.longitude,
+              ) :
+              new Container()
 
 
             ])
@@ -190,6 +208,7 @@ class _EventInfoPageState extends State<EventInfoPage> {
 
 
 }
+
 Future<bool> addEventToFlags(MyEvent event, GoogleSignInAccount user) async {
   DatabaseReference currEventRef = FirebaseDatabase.instance.reference()
       .child('events')
@@ -215,21 +234,22 @@ Future<bool> addEventToFlags(MyEvent event, GoogleSignInAccount user) async {
   currEventRef.child("flags").child(user.id).set({
     'name': user.displayName,
     'image': user.photoUrl
-  }).catchError((error){
+  }).catchError((error) {
     return false;
   });
 
   popEventRef.child("flags").child(user.id).set({
     'name': user.displayName,
     'image': user.photoUrl
-  }).catchError((error){
+  }).catchError((error) {
     return false;
   });
 
   return true;
 }
 
-Future<bool> removeEventFromFlags(MyEvent event, GoogleSignInAccount user) async {
+Future<bool> removeEventFromFlags(MyEvent event,
+    GoogleSignInAccount user) async {
   DatabaseReference currEventRef = FirebaseDatabase.instance.reference()
       .child('events')
       .child(event.key);
@@ -251,11 +271,11 @@ Future<bool> removeEventFromFlags(MyEvent event, GoogleSignInAccount user) async
 
   //TODO post to the events flagged
 
-  await currEventRef.child("flags").child(user.id).remove().catchError((error){
+  await currEventRef.child("flags").child(user.id).remove().catchError((error) {
     return false;
   });
 
-  await popEventRef.child("flags").child(user.id).remove().catchError((error){
+  await popEventRef.child("flags").child(user.id).remove().catchError((error) {
     return false;
   });
 
@@ -307,10 +327,10 @@ class About extends StatelessWidget {
     Widget food = new Text(
       foodType.toString().replaceAll('[', "").replaceAll("]", ""),
       style: descriptionStyle,);
-    if (foodType is String) {
+    if (foodType is String || foodType is List && foodType.length == 1) {
       food = new CategoryTag(
           user: user,
-          category: foodType.toString().replaceAll('[', ""),
+          category: foodType.toString().replaceAll('[', "").replaceAll("]", ""),
           style: descriptionStyle, color: Theme
           .of(context)
           .accentColor);

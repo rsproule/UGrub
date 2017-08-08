@@ -1,10 +1,7 @@
-import 'dart:async';
 import 'dart:math';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_database/ui/firebase_animated_list.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'events.dart';
 import 'group_info.dart';
@@ -90,29 +87,45 @@ class _HomePageFeedState extends State<HomePageFeed> {
         ));
   }
 
-  getSideScrollItems(
-      DatabaseReference query, int index, GridItemType type) async {
+  checkIsNull( arg, String type){
+    if(arg != null){
+      return arg;
+    }
+    else{
+      print("Error on " + type);
+      return "";
+    }
+  }
+
+  getSideScrollItems(DatabaseReference query, int index, GridItemType type) async {
     DataSnapshot snap = await query.once();
     Map b = snap.value;
     List<EventInSideScrollItem> _items = [];
     bool isPopular = (type == GridItemType.popular);
 
     b.forEach((k, snap) {
+      String latitude = null;
+      String longitude = null;
+      if(snap['geolocation'] != null) {
+        latitude = checkIsNull(snap['geolocation']['latitude'], "latitude");
+        longitude = checkIsNull(snap['geolocation']['longitude'], "Longitude");
+      }
+
       MyEvent event = new MyEvent(
         key: k,
-        title: snap['title'],
-        description: snap['description'],
-        location: snap['location'],
-        organization: snap['organization'],
-        date: DateTime.parse(snap['date']),
-        startTime: snap['startTime'],
-        endTime: snap['endTime'],
-        image: snap['image'],
-        foodType: snap['foodType'],
-        latitude: snap['geolocation']['latitude'],
-        longitude: snap['geolocation']['longitude'],
+        title: checkIsNull(snap['title'], "title"),
+        description: checkIsNull(snap['description'], "description"),
+        location: checkIsNull(snap['location'], "location"),
+        organization: checkIsNull(snap['organization'], "organization"),
+        date: DateTime.parse(checkIsNull(snap['date'], "date")),
+        startTime: checkIsNull(snap['startTime'], "start"),
+        endTime: checkIsNull(snap['endTime'], "end"),
+        image: checkIsNull(snap['image'], "image"),
+        foodType: checkIsNull(snap['foodType'], "categ"),
+        latitude: latitude,
+        longitude: longitude,
 
-        isFlagged: isFlagged(snap['flags'], widget.user),
+        isFlagged: isFlagged(checkIsNull(snap['flags'], "flags"), widget.user),
       );
       int score;
       if (isPopular) {
@@ -120,10 +133,10 @@ class _HomePageFeedState extends State<HomePageFeed> {
       }
 
       int distance;
-      if (type == GridItemType.nearby) {
-        double latitude = double.parse(snap['geolocation']['latitude']);
-        double longitude = double.parse(snap['geolocation']['longitude']);
-        distance = _get_distance(latitude, longitude, widget.currentLocation);
+      if (type == GridItemType.nearby && (latitude != null && longitude != null)) {
+        double lat = double.parse(snap['geolocation']['latitude']);
+        double long = double.parse(snap['geolocation']['longitude']);
+        distance = _get_distance(lat, long, widget.currentLocation);
       }
 
       EventInSideScrollItem item = new EventInSideScrollItem(
@@ -134,7 +147,7 @@ class _HomePageFeedState extends State<HomePageFeed> {
         type: type,
         distance: distance,
       );
-      _items.add(item);
+        _items.add(item);
     });
 
     Comparator time = (a, b) {
@@ -195,7 +208,8 @@ class _HomePageFeedState extends State<HomePageFeed> {
             : new ListView(
                 scrollDirection: Axis.horizontal,
                 primary: true,
-                children: _items));
+                children: _items)
+    );
   }
 
   getFoodCategories(DatabaseReference query, int index) async {
@@ -274,6 +288,8 @@ class _HomePageFeedState extends State<HomePageFeed> {
     DatabaseReference foodTypesQuery =
         FirebaseDatabase.instance.reference().child("categories");
     getFoodCategories(foodTypesQuery, 3);
+
+
   }
 
   @override
@@ -331,7 +347,7 @@ class _HomePageFeedState extends State<HomePageFeed> {
   void _goToSearchView() {
     Navigator.of(context).push(new PageRouteBuilder(
             pageBuilder: (BuildContext context, _, __) {
-          return new SearchPage();
+          return new SearchPage(user: widget.user,);
         }, transitionsBuilder:
                 (_, Animation<double> animation, __, Widget child) {
           return new FadeTransition(opacity: animation, child: child);

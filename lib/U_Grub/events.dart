@@ -52,6 +52,13 @@ class _EventFeedState extends State<EventFeed> {
         sort: time,
         query: widget.query,
         itemBuilder: (context, DataSnapshot snap, Animation<double> animation) {
+          String latitude = null;
+          String longitude = null;
+          if(snap.value['geolocation'] != null) {
+            latitude = snap.value['geolocation']['latitude'];
+            longitude = snap.value['geolocation']['longitude'];
+          }
+
           MyEvent event = new MyEvent(
               key: snap.key,
               title: snap.value['title'],
@@ -63,8 +70,8 @@ class _EventFeedState extends State<EventFeed> {
               endTime: snap.value['endTime'],
               image: snap.value['image'],
               foodType: snap.value['foodType'],
-              latitude: snap.value['geolocation']['latitude'],
-              longitude: snap.value['geolocation']['longitude'],
+              latitude: latitude,
+              longitude: longitude,
               isFlagged: isFlagged(snap.value['flags'], widget.user)
           );
 
@@ -176,8 +183,8 @@ class MyEvent {
     @required this.image,
     @required this.foodType,
     @required this.isFlagged,
-    @required this.latitude,
-    @required this.longitude
+     this.latitude,
+     this.longitude
 
   })
       : assert(title != null),

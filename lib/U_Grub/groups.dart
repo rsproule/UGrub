@@ -61,8 +61,15 @@ class FirebaseGroupDecoder extends Converter<DataSnapshot, GroupItem> {
 
     List<MyEvent> _events = [];
 
+
     if(ev != null) {
       ev.forEach((k, v) {
+        String latitude = null;
+        String longitude = null;
+        if(v['geolocation'] != null) {
+          latitude = v['geolocation']['latitude'];
+          longitude = v['geolocation']['longitude'];
+        }
         _events.add(
             new MyEvent(
                 key: k,
@@ -75,8 +82,8 @@ class FirebaseGroupDecoder extends Converter<DataSnapshot, GroupItem> {
                 endTime: v['endTime'],
                 image: v['image'],
                 foodType: v['foodType'],
-                latitude: v['geolocation']['latitude'],
-                longitude: v['geolocation']['longitude'],
+                latitude: latitude != null ? latitude : null,
+                longitude: longitude != null ? longitude : null,
                 isFlagged: false
             )
         );
@@ -87,6 +94,7 @@ class FirebaseGroupDecoder extends Converter<DataSnapshot, GroupItem> {
       input['thumbnail'], fit: BoxFit.fill, width: 120.0, height: 120.0,) : null;
 
     return new GroupItem(
+
         name: input['name'],
         key: snap.key,
         description: input['description'],
