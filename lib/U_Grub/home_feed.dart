@@ -7,11 +7,16 @@ import 'events.dart';
 import 'group_info.dart';
 import 'category_tile.dart';
 import 'drawer.dart';
-import 'package:u_grub2/U_Grub/search.dart';
+import 'SideScrollList.dart';
+import 'search.dart';
 
 class HomePageFeed extends StatefulWidget {
   const HomePageFeed(
-      {Key key, this.showDrawer, @required this.user, this.currentLocation, this.drawer})
+      {Key key,
+      this.showDrawer,
+      @required this.user,
+      this.currentLocation,
+      this.drawer})
       : super(key: key);
 
   final showDrawer;
@@ -24,7 +29,6 @@ class HomePageFeed extends StatefulWidget {
 }
 
 class _HomePageFeedState extends State<HomePageFeed> {
-
   static List<Widget> _popular_events = [];
   static List<Widget> _nearby_events = [];
   static List<Widget> _upcoming_events = [];
@@ -64,8 +68,6 @@ class _HomePageFeedState extends State<HomePageFeed> {
     return appBar;
   }
 
-
-
   buildHeader(String title) {
     TextStyle headerStyle = Theme
         .of(context)
@@ -87,130 +89,6 @@ class _HomePageFeedState extends State<HomePageFeed> {
         ));
   }
 
-  checkIsNull( arg, String type){
-    if(arg != null){
-      return arg;
-    }
-    else{
-      print("Error on " + type);
-      return "";
-    }
-  }
-
-  getSideScrollItems(DatabaseReference query, int index, GridItemType type) async {
-    DataSnapshot snap = await query.once();
-    Map b = snap.value;
-    List<EventInSideScrollItem> _items = [];
-    bool isPopular = (type == GridItemType.popular);
-
-    b.forEach((k, snap) {
-      String latitude = null;
-      String longitude = null;
-      if(snap['geolocation'] != null) {
-        latitude = checkIsNull(snap['geolocation']['latitude'], "latitude");
-        longitude = checkIsNull(snap['geolocation']['longitude'], "Longitude");
-      }
-
-      MyEvent event = new MyEvent(
-        key: k,
-        title: checkIsNull(snap['title'], "title"),
-        description: checkIsNull(snap['description'], "description"),
-        location: checkIsNull(snap['location'], "location"),
-        organization: checkIsNull(snap['organization'], "organization"),
-        date: DateTime.parse(checkIsNull(snap['date'], "date")),
-        startTime: checkIsNull(snap['startTime'], "start"),
-        endTime: checkIsNull(snap['endTime'], "end"),
-        image: checkIsNull(snap['image'], "image"),
-        foodType: checkIsNull(snap['foodType'], "categ"),
-        latitude: latitude,
-        longitude: longitude,
-
-        isFlagged: isFlagged(checkIsNull(snap['flags'], "flags"), widget.user),
-      );
-      int score;
-      if (isPopular) {
-        score = _get_score(snap['flags'].length, event.date);
-      }
-
-      int distance;
-      if (type == GridItemType.nearby && (latitude != null && longitude != null)) {
-        double lat = double.parse(snap['geolocation']['latitude']);
-        double long = double.parse(snap['geolocation']['longitude']);
-        distance = _get_distance(lat, long, widget.currentLocation);
-      }
-
-      EventInSideScrollItem item = new EventInSideScrollItem(
-        user: widget.user,
-        event: event,
-        score: isPopular ? score : null,
-        daysTill: event.date.difference(new DateTime.now()).inDays,
-        type: type,
-        distance: distance,
-      );
-        _items.add(item);
-    });
-
-    Comparator time = (a, b) {
-      DateTime aDate = a.event.date;
-      DateTime bDate = b.event.date;
-      return aDate.compareTo(bDate);
-    };
-
-    Comparator score = (a, b) {
-      int a_Score = a.score;
-      int b_Score = b.score;
-      if (a_Score == b_Score) {
-        DateTime aDate = a.event.date;
-        DateTime bDate = b.event.date;
-        return aDate.compareTo(bDate);
-      } else {
-        return b_Score.compareTo(a_Score);
-      }
-    };
-
-    _items.sort(time);
-
-    if (isPopular) {
-      _items.sort(score);
-    }
-    _items.removeWhere((e) {
-      DateTime now = new DateTime.now();
-
-      return now.isAfter(e.event.date);
-    });
-
-    setState(() {
-      allSideFeed[index] = _items;
-    });
-  }
-
-  _get_score(int numFlags, DateTime date) {
-    int score;
-    int dateBonus;
-    int hoursTillEvent = date.difference(new DateTime.now()).inHours;
-    dateBonus = -hoursTillEvent;
-    score = 10 * numFlags + dateBonus;
-    if (score < 0) {
-      score = numFlags;
-    }
-    return score;
-  }
-
-  _get_distance(double latitude, double longitude, currentLocation) {
-    return 5;
-  }
-
-  buildSideScroll(List<Widget> _items) {
-    return new Container(
-        height: 200.0,
-        child: _items.length == 0
-            ? new Center(child: new CircularProgressIndicator())
-            : new ListView(
-                scrollDirection: Axis.horizontal,
-                primary: true,
-                children: _items)
-    );
-  }
 
   getFoodCategories(DatabaseReference query, int index) async {
     DataSnapshot snap = await query.once();
@@ -272,24 +150,10 @@ class _HomePageFeedState extends State<HomePageFeed> {
   void initState() {
     super.initState();
 
-    //TODO edit the query here
-    DatabaseReference popularEventsQuery =
-        FirebaseDatabase.instance.reference().child("popular");
-    getSideScrollItems(popularEventsQuery, 0, GridItemType.popular);
-
-    DatabaseReference upcomingEventsQuery =
-        FirebaseDatabase.instance.reference().child("popular");
-    getSideScrollItems(upcomingEventsQuery, 1, GridItemType.upcoming);
-
-    DatabaseReference nearbyEventsQuery =
-        FirebaseDatabase.instance.reference().child("popular");
-    getSideScrollItems(nearbyEventsQuery, 2, GridItemType.nearby);
-
+    //TODO get rid of this too
     DatabaseReference foodTypesQuery =
         FirebaseDatabase.instance.reference().child("categories");
     getFoodCategories(foodTypesQuery, 3);
-
-
   }
 
   @override
@@ -313,13 +177,22 @@ class _HomePageFeedState extends State<HomePageFeed> {
       new SliverList(
           delegate: new SliverChildListDelegate(<Widget>[
         buildHeader("Popular Events:"),
-        buildSideScroll(allSideFeed[0]),
+        new SideScrollList(
+          type: GridItemType.popular,
+          user: widget.user,
+        ),
         new Divider(),
         buildHeader("Upcoming Events:"),
-        buildSideScroll(allSideFeed[1]),
+        new SideScrollList(
+          type: GridItemType.upcoming,
+          user: widget.user,
+        ),
         new Divider(),
         buildHeader("Nearby Events:"),
-        buildSideScroll(allSideFeed[2]),
+        new SideScrollList(
+          type: GridItemType.nearby,
+          user: widget.user,
+        ),
         new Divider(),
         buildHeader("Categories:"),
         new Divider(
@@ -347,49 +220,13 @@ class _HomePageFeedState extends State<HomePageFeed> {
   void _goToSearchView() {
     Navigator.of(context).push(new PageRouteBuilder(
             pageBuilder: (BuildContext context, _, __) {
-          return new SearchPage(user: widget.user,);
+          return new SearchPage(
+            user: widget.user,
+          );
         }, transitionsBuilder:
                 (_, Animation<double> animation, __, Widget child) {
           return new FadeTransition(opacity: animation, child: child);
         }));
   }
 
-  isFlagged(Map flags, GoogleSignInAccount user) {
-    if(flags != null) {
-      return flags.containsKey(user.id);
-    }else return false;
-  }
-}
-
-class EventInSideScrollItem extends StatelessWidget {
-  const EventInSideScrollItem({
-    this.event,
-    this.score,
-    this.daysTill,
-    this.type,
-    this.distance,
-    @required this.user
-  });
-
-  final MyEvent event;
-  final int score;
-  final GoogleSignInAccount user;
-  final int daysTill;
-  final int distance;
-  final GridItemType type;
-
-  @override
-  Widget build(BuildContext context) {
-    return new Container(
-        padding: const EdgeInsets.all(15.0),
-        width: 200.0,
-        child: new GridItem(
-          user: user,
-          event: event,
-          score: score,
-          daysTill: daysTill,
-          type: type,
-          distance: distance,
-        ));
-  }
 }

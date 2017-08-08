@@ -184,7 +184,9 @@ class MyEvent {
     @required this.foodType,
     @required this.isFlagged,
      this.latitude,
-     this.longitude
+     this.longitude,
+     this.score,
+     this.distance
 
   })
       : assert(title != null),
@@ -198,6 +200,8 @@ class MyEvent {
         assert(isFlagged != null),
         assert(foodType != null);
 
+  final double distance;
+  final int score;
   final String key;
   final String title;
   final String description;

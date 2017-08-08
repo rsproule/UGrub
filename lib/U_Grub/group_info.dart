@@ -246,7 +246,6 @@ class _GridItemState extends State<GridItem> {
     Random r = new Random();
     String uniqueId = event.title + r.nextInt(10000).toString();
     final Widget image = new GestureDetector(
-
         onTap: () {
           Navigator.of(context).push(new MaterialPageRoute(
               builder: (BuildContext build) {
