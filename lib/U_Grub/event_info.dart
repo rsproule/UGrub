@@ -109,7 +109,6 @@ class _EventInfoPageState extends State<EventInfoPage> {
           flexibleSpace: new FlexibleSpaceBar(
             title: new Container(
                 width: screenWidth,
-                color: Colors.black12,
                 margin: const EdgeInsets.only(right: 100.0, left: 100.0),
                 child: new Text(event.title)),
             background: new Stack(

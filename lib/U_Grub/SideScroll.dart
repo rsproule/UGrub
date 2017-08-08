@@ -40,12 +40,12 @@ class _SideScrollItemState extends State<SideScrollItem> {
       children: <Widget>[
         new Expanded(child: new Container()),
         new Container(
-          color: Colors.black45,
+          color: Colors.black54,
           padding: const EdgeInsets.all(4.0),
           child: new Row(
               children: <Widget>[
                 new Container(padding: const EdgeInsets.only(right: 5.0),
-                    child: new Icon(icon)
+                    child: new Icon(icon, color: Colors.white,)
                 ),
                 new Text(val, style: Theme
                     .of(context)
@@ -65,7 +65,7 @@ class _SideScrollItemState extends State<SideScrollItem> {
         return _buildLeadingWidget(widget.event.score.toString(), Icons.whatshot);
 
       case GridItemType.upcoming:
-        int daysTill = new DateTime.now().difference(widget.event.date).inDays;
+        int daysTill =widget.event.date.difference(new DateTime.now()).inDays;
         String s = daysTill == 1 ? "" : "s";
         String msg = daysTill.toString() + " day" + s + " till";
         if (daysTill == 0) {

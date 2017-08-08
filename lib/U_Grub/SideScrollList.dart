@@ -60,13 +60,13 @@ class _SideScrollListState extends State<SideScrollList> {
     DateTime now = new DateTime.now();
     switch (widget.type) {
       case GridItemType.upcoming:
-        return now.isAfter(event.date);
+        return !now.isAfter(event.date);
       case GridItemType.popular:
         int score = event.score;
         return now.isAfter(event.date) && score > 0;
       case GridItemType.nearby:
         //TODO check if the event is within x miles
-        return now.isAfter(event.date);
+        return !now.isAfter(event.date);
       case GridItemType.none:
         return true;
       default:
@@ -78,7 +78,7 @@ class _SideScrollListState extends State<SideScrollList> {
     Comparator time = (a, b) {
       DateTime aDate = DateTime.parse(a.value['date']);
       DateTime bDate =  DateTime.parse(b.value['date']);
-      return bDate.difference(aDate).inMilliseconds;
+      return aDate.difference(bDate).inMilliseconds;
     };
 
     Comparator score = (a, b) {
@@ -120,9 +120,12 @@ class _SideScrollListState extends State<SideScrollList> {
     }else return false;
   }
 
+  Map<String, SideScrollItem> _cache =  new Map();
+
 
   @override
   Widget build(BuildContext context) {
+
     return new Container(
       height: 200.0,
       child: new FirebaseAnimatedList(
@@ -133,40 +136,55 @@ class _SideScrollListState extends State<SideScrollList> {
         sort: _getSort(),
         query: _getQuery(),
         itemBuilder: (_, DataSnapshot snap, Animation<double> anim){
-          String latitude;
-          String longitude;
-          if(snap.value['geolocation'] != null) {
-            latitude = snap.value['geolocation']['latitude'];
-            longitude = snap.value['geolocation']['longitude'];
+          if(_cache.containsKey(snap.key)){
+            if(_filter(_cache[snap.key].event)) {
+              return _cache[snap.key];
+            }
+            else{
+              return new Container();
+            }
           }
+          else {
+            String latitude;
+            String longitude;
+            if (snap.value['geolocation'] != null) {
+              latitude = snap.value['geolocation']['latitude'];
+              longitude = snap.value['geolocation']['longitude'];
+            }
 
-          Map flags = snap.value['flags'];
-          int numFlags = flags != null ? flags.length : 0;
-          MyEvent event = new MyEvent(
-              key: snap.key,
-              title: snap.value['title'],
-              description: snap.value['description'],
-              location: snap.value['location'],
-              organization: snap.value['organization'],
-              date: DateTime.parse(snap.value['date']),
-              startTime: snap.value['startTime'],
-              endTime: snap.value['endTime'],
-              image: snap.value['image'],
-              foodType: snap.value['foodType'],
-              latitude: latitude,
-              longitude: longitude,
-              isFlagged: isFlagged(snap.value['flags'], widget.user),
-              score: _getScore(numFlags, DateTime.parse(snap.value['date'])),
-              distance: _getDistance(latitude, longitude)
-          );
+            Map flags = snap.value['flags'];
+            int numFlags = flags != null ? flags.length : 0;
+            MyEvent event = new MyEvent(
+                key: snap.key,
+                title: snap.value['title'],
+                description: snap.value['description'],
+                location: snap.value['location'],
+                organization: snap.value['organization'],
+                date: DateTime.parse(snap.value['date']),
+                startTime: snap.value['startTime'],
+                endTime: snap.value['endTime'],
+                image: snap.value['image'],
+                foodType: snap.value['foodType'],
+                latitude: latitude,
+                longitude: longitude,
+                isFlagged: isFlagged(snap.value['flags'], widget.user),
+                score: _getScore(numFlags, DateTime.parse(snap.value['date'])),
+                distance: _getDistance(latitude, longitude)
+            );
 
-          if(_filter(event)){
-            return new SideScrollItem(
+            _cache.putIfAbsent(snap.key, () => new SideScrollItem(
               type: widget.type,
               event: event,
-            );
-          }else{
-            return new Container();
+            ));
+
+            if(_filter(event)){
+              return new SideScrollItem(
+                type: widget.type,
+                event: event,
+              );
+            }else{
+              return new Container();
+            }
           }
 
         },
