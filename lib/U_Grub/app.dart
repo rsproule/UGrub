@@ -1,6 +1,9 @@
+import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:u_grub2/U_Grub/login.dart';
 //import 'package:location/location.dart';
 import 'home.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -13,10 +16,6 @@ import 'dart:async';
 //routing (if I need it)
 
 class GrubApp extends StatefulWidget {
-  const GrubApp({@required this.user});
-
-  final GoogleSignInAccount user;
-
   @override
   _GrubAppState createState() => new _GrubAppState();
 }
@@ -24,6 +23,8 @@ class GrubApp extends StatefulWidget {
 class _GrubAppState extends State<GrubApp> {
   bool _isLightTheme = true;
   Color _themeColor = Colors.blue;
+  bool isLoggedIn = false;
+  GoogleSignInAccount user;
 
   getThemeFromPreference() async {
     SharedPreferences pref = await SharedPreferences.getInstance();
@@ -36,6 +37,41 @@ class _GrubAppState extends State<GrubApp> {
           ? new Color(pref.getInt("themeColor"))
           : _themeColor;
     });
+  }
+  buildLoadingScreen(BuildContext context) {
+
+    //TODO make a better loading screen
+    Widget loadingScreen = new Scaffold(
+      body: new Center(
+          child: new CircularProgressIndicator(),
+
+      ),
+    );
+    return loadingScreen;
+  }
+
+  Widget buildHome(user){
+     return new GrubHome(
+      currentLocation: _currentLocation,
+      user: user,
+      isLightTheme: _isLightTheme,
+      onThemeChanged: (bool val) async {
+        SharedPreferences pref = await SharedPreferences.getInstance();
+        pref.setBool('isLightTheme', val);
+        setState(() {
+          _isLightTheme = val;
+        });
+      },
+      themeColor: _themeColor,
+      onColorChanged: (int c) async {
+        SharedPreferences pref = await SharedPreferences.getInstance();
+        pref.setInt("themeColor", c);
+        setState(() {
+          _themeColor = new Color(c);
+        });
+      },
+    );
+
   }
 
 //  _init_location() async {
@@ -66,6 +102,14 @@ class _GrubAppState extends State<GrubApp> {
   void initState() {
     super.initState();
     getThemeFromPreference();
+    login().then((GoogleSignIn g){
+      setState((){
+        user = g.currentUser;
+        isLoggedIn = true;
+
+      });
+    });
+
 //    _init_location();
 //    _locationSubscription =
 //        _location.onLocationChanged.listen((Map<String, double> result) {
@@ -73,6 +117,11 @@ class _GrubAppState extends State<GrubApp> {
 //        _currentLocation = result;
 //      });
 //    });
+  }
+
+  Future<GoogleSignIn> login() async {
+    await ensureLoggedIn();
+    return googleSignIn;
   }
 
   @override
@@ -85,30 +134,9 @@ class _GrubAppState extends State<GrubApp> {
     final ThemeData _darkTheme =
         new ThemeData(accentColor: _themeColor, brightness: Brightness.dark);
 
-    Widget home = new GrubHome(
-      currentLocation: _currentLocation,
-      user: widget.user,
-      isLightTheme: _isLightTheme,
-      onThemeChanged: (bool val) async {
-        SharedPreferences pref = await SharedPreferences.getInstance();
-        pref.setBool('isLightTheme', val);
-        setState(() {
-          _isLightTheme = val;
-        });
-      },
-      themeColor: _themeColor,
-      onColorChanged: (int c) async {
-        SharedPreferences pref = await SharedPreferences.getInstance();
-        pref.setInt("themeColor", c);
-        setState(() {
-          _themeColor = new Color(c);
-        });
-      },
-    );
-
     return new MaterialApp(
         title: "U Grub",
-        home: home,
+        home: isLoggedIn ? buildHome(this.user) : buildLoadingScreen(context),
         theme: _isLightTheme
             ? _lightTheme
             : _darkTheme.copyWith(accentColor: _themeColor));

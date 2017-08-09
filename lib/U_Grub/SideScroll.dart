@@ -145,6 +145,7 @@ class _SideScrollItemState extends State<SideScrollItem> {
 
     return new Container(
       width: 200.0,
+      height: 200.0,
       padding: const EdgeInsets.all(10.0),
       child: new Card(
         elevation: 5.0,

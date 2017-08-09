@@ -29,16 +29,13 @@ class HomePageFeed extends StatefulWidget {
 }
 
 class _HomePageFeedState extends State<HomePageFeed> {
-  static List<Widget> _popular_events = [];
-  static List<Widget> _nearby_events = [];
-  static List<Widget> _upcoming_events = [];
+  static List<MyEvent> _popular_events = [];
+  bool popIsLoaded = false;
+  static List<MyEvent> _nearby_events = [];
+  bool upcIsLoaded = false;
+  static List<MyEvent> _upcoming_events = [];
+  bool nearbyIsLoaded = false;
   static List<Widget> _food_categories = [];
-  List<List<Widget>> allSideFeed = [
-    _popular_events,
-    _upcoming_events,
-    _nearby_events,
-    _food_categories
-  ];
 
   buildAppBar() {
     TextStyle fontStyle = Theme.of(context).brightness == Brightness.light
@@ -88,7 +85,6 @@ class _HomePageFeedState extends State<HomePageFeed> {
           ],
         ));
   }
-
 
   getFoodCategories(DatabaseReference query, int index) async {
     DataSnapshot snap = await query.once();
@@ -142,13 +138,39 @@ class _HomePageFeedState extends State<HomePageFeed> {
     _items.sort(count);
 
     setState(() {
-      allSideFeed[index] = _items;
+      _food_categories = _items;
     });
+  }
+
+  Widget buildFoodCategories(orientation) {
+    return new GridView.count(
+      shrinkWrap: true,
+      primary: false,
+      crossAxisCount: (orientation == Orientation.portrait) ? 2 : 3,
+      mainAxisSpacing: 4.0,
+      crossAxisSpacing: 4.0,
+      padding: const EdgeInsets.all(4.0),
+      childAspectRatio: (orientation == Orientation.portrait) ? 1.0 : 1.3,
+      children: _food_categories,
+    );
   }
 
   @override
   void initState() {
     super.initState();
+
+    getItems(GridItemType.popular, widget.user).then((List<MyEvent> events) {
+      _popular_events = events;
+      popIsLoaded = true;
+    });
+    getItems(GridItemType.upcoming, widget.user).then((List<MyEvent> events) {
+      _upcoming_events = events;
+      upcIsLoaded = true;
+    });
+    getItems(GridItemType.nearby, widget.user).then((List<MyEvent> events) {
+      _nearby_events = events;
+      nearbyIsLoaded = true;
+    });
 
     //TODO get rid of this too
     DatabaseReference foodTypesQuery =
@@ -159,6 +181,24 @@ class _HomePageFeedState extends State<HomePageFeed> {
   @override
   Widget build(BuildContext context) {
     final double systemTopPadding = MediaQuery.of(context).padding.top;
+    final loader = new Container(
+      height: 200.0,
+      child: new Center(
+        child: new CircularProgressIndicator(),
+      ),
+    );
+    Widget popular = popIsLoaded
+        ? new SideScrollList(
+            type: GridItemType.popular, eventsInList: _popular_events)
+        : loader;
+    Widget upcomimg = upcIsLoaded
+        ? new SideScrollList(
+            type: GridItemType.upcoming, eventsInList: _upcoming_events)
+        : loader;
+    Widget nearby = nearbyIsLoaded
+        ? new SideScrollList(
+            type: GridItemType.nearby, eventsInList: _nearby_events)
+        : loader;
 
     Widget dynamicAppBar = new SliverAppBar(
       iconTheme: IconTheme.of(context),
@@ -177,37 +217,18 @@ class _HomePageFeedState extends State<HomePageFeed> {
       new SliverList(
           delegate: new SliverChildListDelegate(<Widget>[
         buildHeader("Popular Events:"),
-        new SideScrollList(
-          type: GridItemType.popular,
-          user: widget.user,
-        ),
+        popular,
         new Divider(),
         buildHeader("Upcoming Events:"),
-        new SideScrollList(
-          type: GridItemType.upcoming,
-          user: widget.user,
-        ),
+        upcomimg,
         new Divider(),
         buildHeader("Nearby Events:"),
-        new SideScrollList(
-          type: GridItemType.nearby,
-          user: widget.user,
-        ),
-        new Divider(),
+        nearby,
         buildHeader("Categories:"),
         new Divider(
           color: Colors.transparent,
         ),
-        new GridView.count(
-          shrinkWrap: true,
-          primary: false,
-          crossAxisCount: (orientation == Orientation.portrait) ? 2 : 3,
-          mainAxisSpacing: 4.0,
-          crossAxisSpacing: 4.0,
-          padding: const EdgeInsets.all(4.0),
-          childAspectRatio: (orientation == Orientation.portrait) ? 1.0 : 1.3,
-          children: allSideFeed[3],
-        )
+        buildFoodCategories(orientation)
       ])),
     ]);
 
@@ -228,5 +249,4 @@ class _HomePageFeedState extends State<HomePageFeed> {
           return new FadeTransition(opacity: animation, child: child);
         }));
   }
-
 }

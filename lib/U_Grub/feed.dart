@@ -1,4 +1,5 @@
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 
 import 'events.dart';
@@ -36,10 +37,59 @@ class _MainFeedState extends State<MainFeed> with TickerProviderStateMixin {
 
   int _index = 0;
 
+  setupNotifications(user){
+    final FirebaseMessaging _firebaseMessaging = new FirebaseMessaging();
+    _firebaseMessaging.configure(
+      onMessage: (Map<String, dynamic> message) {
+        print("onMessage: $message");
+        // TODO add message to db? or have the web service do that automatically
+        // actually only the ones that come from the top maybe
+        DatabaseReference ref = FirebaseDatabase.instance.reference().child("users").child(user.id).child(
+            "notifications");
+
+        Map msg = message['aps']['alert'];
+        print(msg);
+        ref.push().set({
+          "title" : msg['title'],
+          "message" : msg['body'],
+          'isOpened' : false
+        });
+
+//        _showItemDialog(message);
+      },
+      onLaunch: (Map<String, dynamic> message) {
+        print("onLaunch: $message");
+        setState((){
+          _index = 2;
+        });
+
+
+//        _navigateToItemDetail(message);
+      },
+      onResume: (Map<String, dynamic> message) {
+        print("onResume: $message");
+        setState((){
+          _index = 2;
+        });
+//        _navigateToItemDetail(message);
+      },
+    );
+
+    _firebaseMessaging.requestNotificationPermissions(
+        const IosNotificationSettings(sound: true, badge: true, alert: true)
+    );
+
+    _firebaseMessaging.onIosSettingsRegistered
+        .listen((IosNotificationSettings settings) {
+      print("Settings registered: $settings");
+    });
+  }
+
 
   @override
   void initState() {
     super.initState();
+    setupNotifications(widget.user);
   }
 
   @override
