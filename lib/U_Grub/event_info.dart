@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'events.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:share/share.dart';
+
 
 class EventInfoPage extends StatefulWidget {
   const EventInfoPage({
@@ -93,6 +95,9 @@ class _EventInfoPageState extends State<EventInfoPage> {
                         isFlagged = actuallyIsFlagged;
                       });
                     }
+                  }
+                  if(selected == "Share"){
+                    share("ChecK out this event on UGrub! - " + widget.event.title + " on " + event.getDateString());
                   }
                 },
                 itemBuilder: (BuildContext context) =>
@@ -237,12 +242,12 @@ Future<bool> addEventToFlags(MyEvent event, GoogleSignInAccount user) async {
     return false;
   });
 
-  popEventRef.child("flags").child(user.id).set({
-    'name': user.displayName,
-    'image': user.photoUrl
-  }).catchError((error) {
-    return false;
-  });
+//  popEventRef.child("flags").child(user.id).set({
+//    'name': user.displayName,
+//    'image': user.photoUrl
+//  }).catchError((error) {
+//    return false;
+//  });
 
   return true;
 }

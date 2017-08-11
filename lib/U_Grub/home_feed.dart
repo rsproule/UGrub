@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
@@ -155,22 +156,58 @@ class _HomePageFeedState extends State<HomePageFeed> {
     );
   }
 
+  loadInItems(GridItemType type){
+    getItems(type, widget.user).then((List<MyEvent> events) {
+      switch(type){
+        case GridItemType.popular:
+          setState((){
+            _popular_events = events;
+            popIsLoaded = true;
+          });
+
+          break;
+        case GridItemType.upcoming:
+          setState((){
+            _upcoming_events = events;
+            upcIsLoaded = true;
+          });
+
+          break;
+        case GridItemType.nearby:
+          setState((){
+            _nearby_events = events;
+            nearbyIsLoaded = true;
+          });
+
+          break;
+        case GridItemType.none:
+          //run for the hills
+      }
+
+    }).catchError((error){
+      setState((){
+        loader = new Container(
+          height: 200.0,
+          child: new Center(
+            child: new Text("Error Loading Data")
+          ),
+        );
+      });
+    });
+  }
+
   @override
   void initState() {
     super.initState();
 
-    getItems(GridItemType.popular, widget.user).then((List<MyEvent> events) {
-      _popular_events = events;
-      popIsLoaded = true;
-    });
-    getItems(GridItemType.upcoming, widget.user).then((List<MyEvent> events) {
-      _upcoming_events = events;
-      upcIsLoaded = true;
-    });
-    getItems(GridItemType.nearby, widget.user).then((List<MyEvent> events) {
-      _nearby_events = events;
-      nearbyIsLoaded = true;
-    });
+    loadInItems(GridItemType.popular);
+
+    loadInItems(GridItemType.upcoming);
+
+    loadInItems(GridItemType.nearby);
+
+    startTimeout();
+
 
     //TODO get rid of this too
     DatabaseReference foodTypesQuery =
@@ -178,26 +215,74 @@ class _HomePageFeedState extends State<HomePageFeed> {
     getFoodCategories(foodTypesQuery, 3);
   }
 
+  startTimeout(){
+    Duration timeout = new Duration(seconds: 5);
+
+    return new Timer(timeout, handleTimeout);
+
+  }
+
+  reload(GridItemType type){
+    setState((){
+      loader = new Container(
+        height: 200.0,
+        child: new Center(
+          child: new IconButton(
+              icon: new Icon(Icons.refresh),
+              onPressed: (){
+                setState((){
+                  loader =  new Container(
+                    height: 200.0,
+                    child: new Center(
+                      child: new CircularProgressIndicator(),
+                    ),
+                  );
+                });
+
+                loadInItems(GridItemType.popular);
+                startTimeout();
+              }
+          ),
+        ),
+      );
+    });
+  }
+
+  handleTimeout()  {
+    if(!popIsLoaded){
+      reload(GridItemType.popular);
+    }
+    if(!upcIsLoaded){
+      reload(GridItemType.upcoming);
+    }
+    if(!nearbyIsLoaded){
+      reload(GridItemType.nearby);
+    }
+  }
+
+
+  Widget loader = new Container(
+    height: 200.0,
+    child: new Center(
+      child: new CircularProgressIndicator(),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     final double systemTopPadding = MediaQuery.of(context).padding.top;
-    final loader = new Container(
-      height: 200.0,
-      child: new Center(
-        child: new CircularProgressIndicator(),
-      ),
-    );
+
     Widget popular = popIsLoaded
         ? new SideScrollList(
-            type: GridItemType.popular, eventsInList: _popular_events)
+            type: GridItemType.popular, eventsInList: _popular_events, user: widget.user,)
         : loader;
     Widget upcomimg = upcIsLoaded
         ? new SideScrollList(
-            type: GridItemType.upcoming, eventsInList: _upcoming_events)
+            type: GridItemType.upcoming, eventsInList: _upcoming_events, user: widget.user,)
         : loader;
     Widget nearby = nearbyIsLoaded
         ? new SideScrollList(
-            type: GridItemType.nearby, eventsInList: _nearby_events)
+            type: GridItemType.nearby, eventsInList: _nearby_events, user: widget.user,)
         : loader;
 
     Widget dynamicAppBar = new SliverAppBar(

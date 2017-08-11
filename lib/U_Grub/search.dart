@@ -22,6 +22,8 @@ class _SearchPageState extends State<SearchPage> {
 
   bool isSearching = false;
 
+
+
   buildSearchBar() {
     return new Card(
       child: new ListTile(

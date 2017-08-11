@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import "package:firebase_database/firebase_database.dart";
 import 'package:firebase_database/ui/firebase_animated_list.dart';
+import 'package:share/share.dart';
 import 'event_info.dart';
 import 'groups.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -337,7 +338,11 @@ class EventCard extends StatelessWidget {
                   alignment: MainAxisAlignment.start,
                   children: <Widget>[
                     new PopupMenuButton(
-
+                        onSelected: (String s){
+                          if(s == "Share"){
+                            share("Check out this event on UGrub! - " + event.title + " on " + event.getDateString());
+                          }
+                        },
                         child: new Text("SHARE", style: Theme.of(context).textTheme.button.copyWith(color: Theme.of(context).accentColor),),
                         itemBuilder: (BuildContext context) =>
                         <PopupMenuItem<String>>[

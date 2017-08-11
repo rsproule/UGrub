@@ -13,6 +13,7 @@ dependencies:
   firebase_messaging: 0.0.5
   shared_preferences: 0.2.4
   image: 1.1.27
+  share: 0.2.1
 #  location: "^1.1.3"
 
 

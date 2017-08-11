@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'event_info.dart';
@@ -9,7 +10,7 @@ class SideScrollItem extends StatefulWidget {
   const SideScrollItem({
     this.type: GridItemType.none,
     this.event,
-    this.user
+    @required this.user
 
   });
 
@@ -133,7 +134,7 @@ class _SideScrollItemState extends State<SideScrollItem> {
             alignment: FractionalOffset.centerLeft,
             child: new Text(widget.event.organization),
           ),
-          trailing: flagWidget
+          //trailing: flagWidget
 
     );
     return footerBar;

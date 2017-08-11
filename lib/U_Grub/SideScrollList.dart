@@ -13,8 +13,9 @@ class SideScrollList extends StatefulWidget {
   const SideScrollList({
     @required this.type,
     @required this.eventsInList,
-    this.user,
+    @required this.user,
   });
+
 
   final List eventsInList;
   final GoogleSignInAccount user;
@@ -194,7 +195,7 @@ bool filter(GridItemType type, MyEvent event) {
       return !now.isAfter(event.date);
     case GridItemType.popular:
       int score = event.score;
-      return now.isAfter(event.date) && score > 0;
+      return !now.isAfter(event.date) && score > 0;
     case GridItemType.nearby:
     //TODO check if the event is within x miles
       return !now.isAfter(event.date);

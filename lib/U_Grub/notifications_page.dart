@@ -80,12 +80,18 @@ class NotificationTile extends StatefulWidget {
 }
 
 class _NotificationTileState extends State<NotificationTile> {
+  bool isOpened;
+  initState(){
+    super.initState();
+    isOpened = widget.notification.isOpened;
+  }
+
   @override
   Widget build(BuildContext context) {
     return new ListTile(
       title: new Text(widget.notification.title),
       subtitle: new Text(widget.notification.message),
-      leading: !widget.notification.isOpened ?
+      leading: !isOpened ?
       new Icon(Icons.notifications, color: Colors.red,) :
       new Icon(Icons.notifications_none),
       onTap: (){
@@ -93,6 +99,9 @@ class _NotificationTileState extends State<NotificationTile> {
             "notifications").child(widget.notification.id).child('isOpened');
 
         ref.set(true);
+        setState((){
+          isOpened = true;
+        });
 
         // TODO open the event info page that this noti is referring to
 
